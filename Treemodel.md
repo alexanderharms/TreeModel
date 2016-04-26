@@ -128,11 +128,12 @@
 ```
 
 ```python
->>> a = QuadTree(poslist, vellist, 0, 0, L, L)
->>> a.Simulate()
->>> plt.figure()
->>> plt.scatter(poslist[:, 1],poslist[:, 2])
->>> plt.show()
+>>> %%timeit
+... a = QuadTree(poslist, vellist, 0, 0, L, L)
+... a.Simulate()
+... plt.figure()
+... plt.scatter(poslist[:, 1],poslist[:, 2])
+... plt.show()
 ```
 
 ```python
@@ -142,7 +143,6 @@
 >>> F1 = [x, y]
 >>> F2 = [a, F1]
 >>> print(F2)
-[1, [2, 3]]
 ```
 
 ```python

@@ -11,11 +11,11 @@
 ... cimport numpy as np
 ... DTYPE = np.float_
 ... ctypedef np.float_t DTYPE_t
-... cdef float L, G, dt
 ...
 ... class QuadTree:
 ...
-...     def __init__(self, np.ndarray[np.float_t, ndim=2] poslist, np.ndarray[np.float_t, ndim=2] vellist, double xmin, double ymin, double xmax, double ymax, int depth=5):
+...     def __init__(self, np.ndarray[np.float_t, ndim=2] poslist, np.ndarray[np.float_t, ndim=2] vellist, \
+...                  double xmin, double ymin, double xmax, double ymax, double L, double dt, double G, int depth=5):
 ...         #assert poslist.dtype == DTYPE
 ...         #assert vellist.dtype == DTYPE
 ...
@@ -26,6 +26,9 @@
 ...         self.xmax = xmax
 ...         self.ymin = ymin
 ...         self.ymax = ymax
+...         self.L = L
+...         self.dt = dt
+...         self.G = G
 ...
 ... #         if self.xmin is None:
 ... #             self.xmax, self.ymax = np.amax(poslist, axis=0)[1:3]
@@ -62,19 +65,22 @@
 ...             q4vel = self.vellist[(self.poslist[:,1] > self.mids[0]) & (self.poslist[:,2] < self.mids[1])]
 ...
 ...             if q1.shape[1] > 1:
-...                 self.children.append(QuadTree(q1, q1vel, self.xmin, self.ymid, self.xmid, self.ymax, self.depth-1))
+...                 self.children.append(QuadTree(q1, q1vel, self.xmin, self.ymid, self.xmid, self.ymax, self.L, self.dt, \
+...                                               self.G, self.depth-1))
 ...
 ...             if q2.shape[1] > 1:
-...                 self.children.append(QuadTree(q2, q2vel, self.xmid, self.ymid, self.xmax, self.ymax, self.depth-1))
+...                 self.children.append(QuadTree(q2, q2vel, self.xmid, self.ymid, self.xmax, self.ymax, self.L, self.dt, \
+...                                               self.G, self.depth-1))
 ...
 ...             if q3.shape[1] > 1:
-...                 self.children.append(QuadTree(q3, q3vel, self.xmin, self.ymin, self.xmid, self.ymid, self.depth-1))
+...                 self.children.append(QuadTree(q3, q3vel, self.xmin, self.ymin, self.xmid, self.ymid, self.L, self.dt, \
+...                                               self.G, self.depth-1))
 ...
 ...             if q4.shape[1] > 1:
-...                 self.children.append(QuadTree(q4, q4vel, self.xmid, self.ymin, self.xmax, self.ymid, self.depth-1))
+...                 self.children.append(QuadTree(q4, q4vel, self.xmid, self.ymin, self.xmax, self.ymid, self.L, self.dt, \
+...                                               self.G, self.depth-1))
 ...
 ...     def CalcF(self, np.ndarray[np.float_t, ndim=1] particle):
-...         cdef float L, dt, G
 ...         cdef int a
 ...         cdef float x, y
 ...         cdef np.ndarray[np.float_t, ndim=1] CM
@@ -87,31 +93,36 @@
 ...
 ...         cdef float CMrsqsum
 ...         cdef float CMr
-...         cdef np.ndarray[np.float_t, ndim=1] F1 = np.zeros(2)
-...         #assert F1.dtype == DTYPE
-...         cdef int i
-...         global F1
+...         cdef float F1x
+...         cdef float F1y
+...         cdef int ii
+...         cdef int jj
+...         cdef float sumposx
+...         cdef float sumposy
+...         global F1x, F1y
 ...
-...         if self.sizes[0] == L:
-...             F1
+...         if self.sizes[0] == self.L:
+...             F1x = 0
+...             F1y = 0
 ...         if self.poslist.size != 0:
 ...             a, x, y = particle
-...             for i in range(len(self.poslist[:,0])):
+...             for ii in range(len(self.poslist[:,0])):
 ...                 sumposx = 0
-...                 sumposx += self.poslist[i, 1]
+...                 sumposx += self.poslist[ii, 1]
 ...                 sumposy = 0
-...                 sumposy += self.poslist[i, 2]
+...                 sumposy += self.poslist[ii, 2]
 ...             CM = np.asarray([sumposx /(self.poslist[:,1]).size, sumposy/(self.poslist[:,2]).size])
 ...             CMrvec = CM - [x, y] + 0.01
 ...             CMrvecsq = CMrvec**2
 ...             CMrsqsum = CMrvecsq[0] + CMrvecsq[1]
 ...             CMr = CMrsqsum**(0.5)
 ...             if (self.sizes[0]/CMr < 1) or (self.children==[]):
-...                 F1 += (G/(CMr**2)) * CMrvec
+...                 F1x += (self.G/(CMr**2)) * CMrvec[0]
+...                 F1y += (self.G/(CMr**2)) * CMrvec[1]
 ...             else:
-...                 for i in range(len(self.children)):
-...                     self.children[i].CalcF(particle)
-...         return F1
+...                 for jj in range(len(self.children)):
+...                     self.children[jj].CalcF(particle)
+...         return F1x, F1y
 ...
 ...
 ...     def CalcTF(self):
@@ -129,41 +140,30 @@
 ... #         for k in range(self.poslist[:,0].size):
 ...
 ...     def Simulate(self):
-...         cdef float L, dt, G
 ...         cdef np.ndarray F
 ...         #assert F.dtype == DTYPE
 ...         cdef int i
 ...         cdef int k
 ...         cdef int k2
 ...         F = self.CalcTF()
-...         for i in range(1000): # aantal tijdstappen
+...         for i in range(100): # aantal tijdstappen
 ...             for k in range(self.poslist[:, 0].size):
 ...                 # Calculate velocity, 1st step
-...                 self.vellist[k, 1] += 0.5 * F[k, 0] * dt
-...                 self.vellist[k, 2] += 0.5 * F[k, 1] * dt
+...                 self.vellist[k, 1] += 0.5 * F[k, 0] * self.dt
+...                 self.vellist[k, 2] += 0.5 * F[k, 1] * self.dt
 ...                 # Calculate new positions
-...                 self.poslist[k, 1] += self.vellist[k, 1] * dt
-...                 self.poslist[k, 2] += self.vellist[k, 2] * dt
-...                 self.poslist[k, 1] = self.poslist[k, 1] % L
-...                 self.poslist[k, 2] = self.poslist[k, 2] % L
+...                 self.poslist[k, 1] += self.vellist[k, 1] * self.dt
+...                 self.poslist[k, 2] += self.vellist[k, 2] * self.dt
+...                 self.poslist[k, 1] = self.poslist[k, 1] % self.L
+...                 self.poslist[k, 2] = self.poslist[k, 2] % self.L
 ...
 ...             F = self.CalcTF()
 ...             for k2 in range(self.poslist[:, 0].size):
 ...                 # Calculate velocity, 2nd step
-...                 self.vellist[k2, 1] += 0.5 * F[k2, 0] * dt
-...                 self.vellist[k2, 2] += 0.5 * F[k2, 1] * dt
+...                 self.vellist[k2, 1] += 0.5 * F[k2, 0] * self.dt
+...                 self.vellist[k2, 2] += 0.5 * F[k2, 1] * self.dt
 ... #             #self.MoveParticles()
 ...             self.CreateTree
-warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:86:29: local variable 'L' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:101:24: local variable 'G' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:133:56: local variable 'dt' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:134:56: local variable 'dt' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:136:61: local variable 'dt' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:137:61: local variable 'dt' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:138:59: local variable 'L' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:139:59: local variable 'L' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:144:58: local variable 'dt' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:145:58: local variable 'dt' referenced before assignment
 ```
 
 ```python
@@ -179,7 +179,7 @@ warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a584399
 >>> poslist[:, 0] = ids
 >>> poslist[:, 1:] = randpos[:,0:]
 >>> vellist[:, 0] = ids
->>> vellist[:, 1:] = np.random.normal(0, np.sqrt(1), (N, 2))
+>>> vellist[:, 1:] = np.random.normal(0, np.sqrt(100), (N, 2))
 >>> G = 6.64e-11
 >>> plt.figure()
 >>> plt.scatter(poslist[:, 1], poslist[:, 2])
@@ -188,10 +188,10 @@ warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a584399
 
 ```python
 >>> %%timeit
-... a = QuadTree(poslist, vellist, 0, 0, L, L)
+... a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G)
 ... a.Simulate()
 ... plt.figure()
-... plt.scatter(a.poslist[:, 1],a.poslist[:, 2])
+... plt.scatter(poslist[:, 1], poslist[:, 2])
 ... plt.show()
 ```
 

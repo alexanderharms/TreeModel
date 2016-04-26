@@ -3,8 +3,6 @@
 >>> %load_ext Cython
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
-The Cython extension is already loaded. To reload it, use:
-  %reload_ext Cython
 ```
 
 ```python
@@ -50,6 +48,8 @@ The Cython extension is already loaded. To reload it, use:
 ...         self.CreateTree()
 ...
 ...     def CreateTree(self):
+...
+...         cdef np.ndarray[np.float_t, ndim=2] q1, q2, q3, q4, q1vel, q2vel, q3vel, q4vel
 ...         if self.depth > 0:
 ...
 ...             q1 = self.poslist[(self.poslist[:,1] < self.mids[0]) & (self.poslist[:,2] > self.mids[1])]
@@ -73,27 +73,27 @@ The Cython extension is already loaded. To reload it, use:
 ...             if q4.shape[1] > 1:
 ...                 self.children.append(QuadTree(q4, q4vel, self.xmid, self.ymin, self.xmax, self.ymid, self.depth-1))
 ...
-...     def CalcF(self, np.ndarray particle):
+...     def CalcF(self, np.ndarray[np.float_t, ndim=1] particle):
 ...         cdef float L, dt, G
 ...         cdef int a
 ...         cdef float x, y
-...         cdef np.ndarray CM
+...         cdef np.ndarray[np.float_t, ndim=1] CM
 ...         #assert CM.dtype == DTYPE
-...         cdef np.ndarray CMrvec
-...         cdef np.ndarray CMrvecsq
+...         cdef np.ndarray[np.float_t, ndim=1] CMrvec
+...         cdef np.ndarray[np.float_t, ndim=1] CMrvecsq
 ...
 ...         #assert CMrvec.dtype == DTYPE
 ...         #assert CMrvecsq.dtype == DTYPE
 ...
 ...         cdef float CMrsqsum
 ...         cdef float CMr
-...         cdef np.ndarray[np.float_t, ndim=2] F1
+...         cdef np.ndarray[np.float_t, ndim=1] F1 = np.zeros(2)
 ...         #assert F1.dtype == DTYPE
 ...         cdef int i
 ...         global F1
 ...
 ...         if self.sizes[0] == L:
-...             F1 = 0
+...             F1
 ...         if self.poslist.size != 0:
 ...             a, x, y = particle
 ...             for i in range(len(self.poslist[:,0])):
@@ -154,16 +154,16 @@ The Cython extension is already loaded. To reload it, use:
 ...                 self.vellist[k2, 2] += 0.5 * F[k2, 1] * dt
 ... #             #self.MoveParticles()
 ...             self.CreateTree
-warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:84:29: local variable 'L' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:99:24: local variable 'G' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:131:56: local variable 'dt' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:132:56: local variable 'dt' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:134:61: local variable 'dt' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:135:61: local variable 'dt' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:136:59: local variable 'L' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:137:59: local variable 'L' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:142:58: local variable 'dt' referenced before assignment
-warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:143:58: local variable 'dt' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:86:29: local variable 'L' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:101:24: local variable 'G' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:133:56: local variable 'dt' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:134:56: local variable 'dt' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:136:61: local variable 'dt' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:137:61: local variable 'dt' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:138:59: local variable 'L' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:139:59: local variable 'L' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:144:58: local variable 'dt' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_9c484ef8bd12f5a68c6a5843990c1a4e.pyx:145:58: local variable 'dt' referenced before assignment
 ```
 
 ```python
@@ -187,24 +187,12 @@ warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1ad
 ```
 
 ```python
->>> a = QuadTree(poslist, vellist, 0, 0, L, L)
->>> a.Simulate()
->>> plt.figure()
->>> plt.scatter(poslist[:, 1],poslist[:, 2])
->>> plt.show()
-```
-
-```python
->>> a = 1
->>> x = 2
->>> y = 3
->>> F1 = [x, y]
->>> F2 = [a, F1]
->>> print(F2)
-```
-
-```python
-
+>>> %%timeit
+... a = QuadTree(poslist, vellist, 0, 0, L, L)
+... a.Simulate()
+... plt.figure()
+... plt.scatter(a.poslist[:, 1],a.poslist[:, 2])
+... plt.show()
 ```
 
 ```python

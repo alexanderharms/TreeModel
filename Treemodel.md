@@ -3,19 +3,23 @@
 >>> %load_ext Cython
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
+The Cython extension is already loaded. To reload it, use:
+  %reload_ext Cython
 ```
 
 ```python
 >>> %%cython
+... import numpy as np
 ... cimport numpy as np
 ... DTYPE = np.float_
 ... ctypedef np.float_t DTYPE_t
+... cdef float L, G, dt
 ...
 ... class QuadTree:
 ...
-...     def __init__(self, np.ndarray poslist, np.ndarray vellist, double xmin, double ymin, double xmax, double ymax, int depth=5):
-...         assert poslist.dtype == DTYPE
-...         assert vellist.dtype == DTYPE
+...     def __init__(self, np.ndarray[np.float_t, ndim=2] poslist, np.ndarray[np.float_t, ndim=2] vellist, double xmin, double ymin, double xmax, double ymax, int depth=5):
+...         #assert poslist.dtype == DTYPE
+...         #assert vellist.dtype == DTYPE
 ...
 ...         self.poslist = poslist
 ...         self.vellist = vellist
@@ -28,16 +32,16 @@
 ... #         if self.xmin is None:
 ... #             self.xmax, self.ymax = np.amax(poslist, axis=0)[1:3]
 ... #             self.xmin, self.ymin = np.amin(poslist, axis=0)[1:3]
-...         assert mins.dtype == DTYPE
-...         assert maxs.dtype == DTYPE
-...         assert sizes.dtype == DTYPE
-...         assert children.dtype == DTYPE
-...         assert mids.dtype == DTYPE
-...         cdef float xmid
-...         cdef float ymid
+...         #assert mins.dtype == DTYPE
+...         #assert maxs.dtype == DTYPE
+...         #assert sizes.dtype == DTYPE
+...         #assert children.dtype == DTYPE
+...         #assert mids.dtype == DTYPE
+...         cdef float xmid, ymid
+...         cdef np.ndarray[np.float_t, ndim=1] mins, maxs
 ...
-...         self.mins = [self.xmin, self.ymin]
-...         self.maxs = [self.xmax, self.ymax]
+...         self.mins = np.asarray([self.xmin, self.ymin])
+...         self.maxs = np.asarray([self.xmax, self.ymax])
 ...         self.sizes = self.maxs - self.mins
 ...         self.children = []
 ...         self.mids = (self.mins + self.maxs)/2
@@ -74,17 +78,17 @@
 ...         cdef int a
 ...         cdef float x, y
 ...         cdef np.ndarray CM
-...         assert CM.dtype == DTYPE
+...         #assert CM.dtype == DTYPE
 ...         cdef np.ndarray CMrvec
 ...         cdef np.ndarray CMrvecsq
 ...
-...         assert CMrvec.dtype == DTYPE
-...         assert CMrvecsq.dtype == DTYPE
+...         #assert CMrvec.dtype == DTYPE
+...         #assert CMrvecsq.dtype == DTYPE
 ...
 ...         cdef float CMrsqsum
 ...         cdef float CMr
-...         cdef np.ndarray F1
-...         assert F1.dtype == DTYPE
+...         cdef np.ndarray[np.float_t, ndim=2] F1
+...         #assert F1.dtype == DTYPE
 ...         cdef int i
 ...         global F1
 ...
@@ -97,7 +101,7 @@
 ...                 sumposx += self.poslist[i, 1]
 ...                 sumposy = 0
 ...                 sumposy += self.poslist[i, 2]
-...             CM = [sumposx /(self.poslist[:,1]).size, sumposy/(self.poslist[:,2]).size]
+...             CM = np.asarray([sumposx /(self.poslist[:,1]).size, sumposy/(self.poslist[:,2]).size])
 ...             CMrvec = CM - [x, y] + 0.01
 ...             CMrvecsq = CMrvec**2
 ...             CMrsqsum = CMrvecsq[0] + CMrvecsq[1]
@@ -127,7 +131,7 @@
 ...     def Simulate(self):
 ...         cdef float L, dt, G
 ...         cdef np.ndarray F
-...         assert F.dtype == DTYPE
+...         #assert F.dtype == DTYPE
 ...         cdef int i
 ...         cdef int k
 ...         cdef int k2
@@ -150,6 +154,16 @@
 ...                 self.vellist[k2, 2] += 0.5 * F[k2, 1] * dt
 ... #             #self.MoveParticles()
 ...             self.CreateTree
+warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:84:29: local variable 'L' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:99:24: local variable 'G' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:131:56: local variable 'dt' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:132:56: local variable 'dt' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:134:61: local variable 'dt' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:135:61: local variable 'dt' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:136:59: local variable 'L' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:137:59: local variable 'L' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:142:58: local variable 'dt' referenced before assignment
+warning: C:\Users\skros\.ipython\cython\_cython_magic_94c8b5c96bed427d4270f6f1adc8223c.pyx:143:58: local variable 'dt' referenced before assignment
 ```
 
 ```python
@@ -187,6 +201,10 @@
 >>> F1 = [x, y]
 >>> F2 = [a, F1]
 >>> print(F2)
+```
+
+```python
+
 ```
 
 ```python

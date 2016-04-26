@@ -72,6 +72,18 @@
 ...         for j in range(self.poslist[:,0].size):
 ...             F[j] = self.CalcF(self.poslist[j,:])
 ...         self.F = F
+...
+...     def MoveParticles(self):
+...
+...         # Verlet voor 1 stap
+...
+...     def Simulate(self):
+...
+...         for i in range (10) # aantal tijdstappen
+...
+...             self.CalcTF()
+...             self.MoveParticles()
+...             self.CreateTree
 ```
 
 ```python

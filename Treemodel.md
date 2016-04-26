@@ -88,14 +88,14 @@
 ...     def Simulate(self):
 ...         F = self.CalcTF()
 ...         for i in range(1000): # aantal tijdstappen
-...             for k in range(self.poslist[:, 0].size):
+...             for k in range(self.poslist[:, 0].size): # Dit kan zonder deze loop, wel beter voor cython zo waarshijnlijk
 ...                 # Calculate velocity, 1st step
 ...                 self.vellist[k, 1] += 0.5 * F[k, 0] * dt
 ...                 self.vellist[k, 2] += 0.5 * F[k, 1] * dt
 ...                 # Calculate new positions
 ...                 self.poslist[k, 1] += self.vellist[k, 1] * dt
 ...                 self.poslist[k, 2] += self.vellist[k, 2] * dt
-...                 self.poslist[k, 1] = self.poslist[k, 1] % L
+...                 self.poslist[k, 1] = self.poslist[k, 1] % L # Periodic boundary conditions
 ...                 self.poslist[k, 2] = self.poslist[k, 2] % L
 ...
 ...             F = self.CalcTF()
@@ -142,6 +142,7 @@
 >>> F1 = [x, y]
 >>> F2 = [a, F1]
 >>> print(F2)
+[1, [2, 3]]
 ```
 
 ```python

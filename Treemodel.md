@@ -4,6 +4,7 @@
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
 >>> import sys
+>>> import scipy.stats as spstats
 ```
 
 ```python
@@ -150,7 +151,7 @@
 ...         cdef int k
 ...         cdef int k2
 ...         F = self.CalcTF()
-...         for i in range(1000): # aantal tijdstappen
+...         for i in range(10): # aantal tijdstappen
 ...             for k in range(self.poslist[:, 0].size):
 ...                 # Calculate velocity, 1st step
 ...                 self.vellist[k, 1] += 0.5 * F[k, 0] * self.dt
@@ -175,18 +176,65 @@
 ... N = 128 # Number of particles
 >>> L = 100 # [AU]
 >>> dt = 1 # [years]
->>> # Generate random positions
-... ids = np.linspace(1, N, N)
->>> #randpos = np.random.uniform(0, L, (N, 2))
-... randr = np.random.uniform(-L/2, L/2, N)
->>> randtheta = np.random.uniform(0, 2*np.pi, N)
->>> randx = randr * np.cos(randtheta) + L/2
->>> randy = randr * np.sin(randtheta) + L/2
->>> randveltheta = np.random.normal(0, np.sqrt(0.1), N)
->>> randvelx = - randveltheta * np.sin(randtheta)
->>> randvely = randveltheta * np.cos(randtheta)
+>>> a = 0.5
+>>> #G = 3.9e67 # [AU]**2/([Solar mass] * [year]**2)
+... G = 100
+>>> Mh = 1
+>>> ids = np.linspace(1, N, N)
 ...
->>> mass = np.ones(N) # [Solar mass]
+>>> Pr = np.random.uniform(0, 1, N)
+>>> r = a * np.sqrt(Pr) / (np.sqrt(Pr) - 1)
+>>> # Von Neumann rejection for velocities
+... Erand = np.random.uniform(-2, 0, N)
+>>> fErand = np.random.uniform(0, 0.3, N)
+...
+>>> def hernquist(Erand):
+...     q = np.sqrt(- a * Erand / (G * Mh))
+...     fE = (np.sqrt(Mh)/(8*np.pi**3 * a ** (5/2) * np.sqrt(2*G)))  \
+...     * (1/(1-q**2)**(5/2)) * (3*np.arcsin(q) + (q * (1 - q**2)**(1/2)) * (1 - 2*q**2) \
+...     * (8 * q**4 - 8 * q**2 - 3))
+...     return fE
+...
+>>> def potential(r):
+...     potential = -G * Mh / (np.absolute(r) + a)
+...     return potential
+...
+>>> fE = hernquist(Erand)
+>>> fEcheck = fE > fErand
+>>> fEcheck.astype(int)
+>>> E = Erand[np.nonzero(Erand * fEcheck)]
+>>> sumfEcheck = sum(fEcheck)
+>>> while sumfEcheck < N:
+...     Erand2 = np.random.uniform(-2, 0, (N - sum(fEcheck)))
+...     fErand2 = np.random.uniform(0, 0.3, (N - sum(fEcheck)))
+...     fE2 = hernquist(Erand2)
+...     fEcheck2 = fE2 > fErand2
+...     fEcheck2.astype(int)
+...     E2 = Erand2[np.nonzero(Erand2 * fEcheck2)]
+...     E = np.append(E, E2)
+...     sumfEcheck += sum(fEcheck2)
+...
+>>> velmagsq = 2*(E[0:N] - potential(r))
+...
+>>> randvelx = np.random.uniform(-np.sqrt(np.absolute(velmagsq)), np.sqrt(np.absolute(velmagsq)), N)
+>>> randvely = np.random.uniform(-np.sqrt(np.absolute(velmagsq - randvelx**2)), \
+...                             np.sqrt(np.absolute(velmagsq - randvelx**2)), N)
+...
+>>> mass = (Mh * r**2) / (r + a)**2
+>>> # Generate random positions
+...
+... #randpos = np.random.uniform(0, L, (N, 2))
+... # randr = np.random.uniform(-L/2, L/2, N)
+... randtheta = np.random.uniform(0, 2*np.pi, N)
+>>> randphi = np.random.uniform(0, np.pi, N)
+>>> randx = r * np.cos(randtheta) + L/2
+>>> randy = r * np.sin(randtheta) + L/2
+...
+>>> # randveltheta = np.random.normal(0, np.sqrt(0.1), N)
+... # randvelx = - randveltheta * np.sin(randtheta)
+... # randvely = randveltheta * np.cos(randtheta)
+...
+... mass = np.ones(N) # [Solar mass]
 >>> poslist = np.zeros((N, 4))
 >>> vellist = np.zeros((N, 3))
 >>> poslist[:, 0] = ids
@@ -194,17 +242,22 @@
 ... poslist[:, 1] = randx
 >>> poslist[:, 2] = randy
 >>> poslist[:, 3] = mass
+...
+...
 >>> vellist[:, 0] = ids
 >>> #vellist[:, 1:] = np.random.normal(0, np.sqrt(10), (N, 2))
 ... vellist[:, 1] = randvelx
 >>> vellist[:, 2] = randvely
->>> #G = 3.9e67 # [AU]**2/([Solar mass] * [year]**2)
-... G = 1
+...
 >>> plt.figure()
 >>> plt.scatter(poslist[:, 1], poslist[:, 2])
 >>> plt.xlim([0, L])
 >>> plt.ylim([0, L])
 >>> plt.show()
+```
+
+```python
+
 ```
 
 ```python

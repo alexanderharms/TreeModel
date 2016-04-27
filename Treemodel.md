@@ -1,6 +1,6 @@
 ```python
->>> %matplotlib inline
->>> %load_ext Cython
+>>> #%matplotlib inline
+... %load_ext Cython
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
 >>> import sys
@@ -43,6 +43,7 @@
 ...         #assert mids.dtype == DTYPE
 ...         cdef float xmid, ymid
 ...         cdef np.ndarray[np.float_t, ndim=1] mins, maxs
+...         cdef np.ndarray F
 ...
 ...         self.mins = np.asarray([self.xmin, self.ymin])
 ...         self.maxs = np.asarray([self.xmax, self.ymax])
@@ -52,6 +53,7 @@
 ...         self.xmid, self.ymid = self.mids
 ...
 ...         self.CreateTree()
+...         self.F = self.CalcTF()
 ...
 ...     def CreateTree(self):
 ...
@@ -140,16 +142,14 @@
 ...         self.F = F
 ...         return F
 ...
-...     def MoveParticles(self, F=None):
-...         if F == None:
-...             F = self.F
+...     def MoveParticles(self):
 ...         cdef int k
 ...         cdef int k2
 ...         #cdef np.ndarray F
 ...         for k in range(self.poslist[:, 0].size):
 ...             # Calculate velocity, 1st step
-...             self.vellist[k, 1] += 0.5 * F[k, 0] * self.dt
-...             self.vellist[k, 2] += 0.5 * F[k, 1] * self.dt
+...             self.vellist[k, 1] += 0.5 * self.F[k, 0] * self.dt
+...             self.vellist[k, 2] += 0.5 * self.F[k, 1] * self.dt
 ...             # Calculate new positions
 ...             self.poslist[k, 1] += self.vellist[k, 1] * self.dt
 ...             self.poslist[k, 2] += self.vellist[k, 2] * self.dt
@@ -159,17 +159,16 @@
 ...         self.F = self.CalcTF()
 ...         for k2 in range(self.poslist[:, 0].size):
 ...             # Calculate velocity, 2nd step
-...             self.vellist[k2, 1] += 0.5 * F[k2, 0] * self.dt
-...             self.vellist[k2, 2] += 0.5 * F[k2, 1] * self.dt
+...             self.vellist[k2, 1] += 0.5 * self.F[k2, 0] * self.dt
+...             self.vellist[k2, 2] += 0.5 * self.F[k2, 1] * self.dt
 ...         self.CreateTree
+...         return self.poslist
 ...
 ...     def Simulate(self):
-...         cdef np.ndarray F0
 ...         #assert F.dtype == DTYPE
 ...         cdef int i
-...         F0 = self.CalcTF()
 ...         for i in range(100): # aantal tijdstappen
-...             self.MoveParticles(F0)
+...             self.MoveParticles()
 ```
 
 ```python
@@ -189,19 +188,26 @@
 >>> vellist[:, 0] = ids
 >>> vellist[:, 1:] = np.random.normal(0, np.sqrt(100), (N, 2))
 >>> G = 6.64e-11
->>> plt.figure()
->>> plt.scatter(poslist[:, 1], poslist[:, 2])
->>> plt.show()
+>>> # plt.figure()
+... # plt.scatter(poslist[:, 1], poslist[:, 2])
+... # plt.show()
 ```
 
 ```python
->>> a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G, N)
->>> a.Simulate()
->>> plt.figure()
->>> plt.scatter(poslist[:, 1], poslist[:, 2])
+>>> # Plottin code
+... a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G, N)
+...
+>>> fig = plt.figure()
+>>> ax = fig.add_subplot(111, aspect='equal', autoscale_on=False, xlim=(0, L), ylim=(0, L))
+>>> particles, = ax.plot([], [], 'bo', ms=6)
+...
+>>> def animate(i):
+...     index, x, y, m = a.MoveParticles().T
+...     particles.set_data(x, y)
+...     return particles
+...
+>>> ani = animation.FuncAnimation(fig, animate)
 >>> plt.show()
-C:\Users\skros\Anaconda3\lib\site-packages\ipykernel\__main__.py:2: FutureWarning: comparison to `None` will result in an elementwise object comparison in the future.
-  from ipykernel import kernelapp as app
 ```
 
 ```python

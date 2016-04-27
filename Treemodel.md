@@ -150,7 +150,7 @@
 ...         cdef int k
 ...         cdef int k2
 ...         F = self.CalcTF()
-...         for i in range(100): # aantal tijdstappen
+...         for i in range(1000): # aantal tijdstappen
 ...             for k in range(self.poslist[:, 0].size):
 ...                 # Calculate velocity, 1st step
 ...                 self.vellist[k, 1] += 0.5 * F[k, 0] * self.dt
@@ -172,23 +172,38 @@
 
 ```python
 >>> # Variables
-... N = 1024 # Number of particles
->>> L = 1e
->>> dt = 1
+... N = 128 # Number of particles
+>>> L = 100 # [AU]
+>>> dt = 1 # [years]
 >>> # Generate random positions
 ... ids = np.linspace(1, N, N)
->>> randpos = np.random.uniform(0, L, (N, 2))
->>> mass = np.ones(N)
+>>> #randpos = np.random.uniform(0, L, (N, 2))
+... randr = np.random.uniform(-L/2, L/2, N)
+>>> randtheta = np.random.uniform(0, 2*np.pi, N)
+>>> randx = randr * np.cos(randtheta) + L/2
+>>> randy = randr * np.sin(randtheta) + L/2
+>>> randveltheta = np.random.normal(0, np.sqrt(0.1), N)
+>>> randvelx = - randveltheta * np.sin(randtheta)
+>>> randvely = randveltheta * np.cos(randtheta)
+...
+>>> mass = np.ones(N) # [Solar mass]
 >>> poslist = np.zeros((N, 4))
 >>> vellist = np.zeros((N, 3))
 >>> poslist[:, 0] = ids
->>> poslist[:, 1:3] = randpos[:,0:]
+>>> #poslist[:, 1:3] = randpos[:,0:]
+... poslist[:, 1] = randx
+>>> poslist[:, 2] = randy
 >>> poslist[:, 3] = mass
 >>> vellist[:, 0] = ids
->>> vellist[:, 1:] = np.random.normal(0, np.sqrt(100), (N, 2))
->>> G = 6.64e-11
+>>> #vellist[:, 1:] = np.random.normal(0, np.sqrt(10), (N, 2))
+... vellist[:, 1] = randvelx
+>>> vellist[:, 2] = randvely
+>>> #G = 3.9e67 # [AU]**2/([Solar mass] * [year]**2)
+... G = 1
 >>> plt.figure()
 >>> plt.scatter(poslist[:, 1], poslist[:, 2])
+>>> plt.xlim([0, L])
+>>> plt.ylim([0, L])
 >>> plt.show()
 ```
 
@@ -197,6 +212,8 @@
 >>> a.Simulate()
 >>> plt.figure()
 >>> plt.scatter(poslist[:, 1], poslist[:, 2])
+>>> plt.xlim([0, L])
+>>> plt.ylim([0, L])
 >>> plt.show()
 ```
 

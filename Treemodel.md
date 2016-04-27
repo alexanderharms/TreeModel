@@ -3,9 +3,7 @@
 ... %load_ext Cython
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
->>> import sys
->>> from matplotlib import animation, rc
->>> from IPython.display import HTML
+>>> from matplotlib import animation
 ```
 
 ```python

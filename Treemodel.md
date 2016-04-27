@@ -4,6 +4,8 @@
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
 >>> from matplotlib import animation
+The Cython extension is already loaded. To reload it, use:
+  %reload_ext Cython
 ```
 
 ```python
@@ -207,20 +209,6 @@
 ```
 
 ```python
->>> # Plotting code
-... a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G, N)
-...
->>> fig = plt.figure()
->>> ax = fig.add_subplot(111, aspect='equal', autoscale_on=False, xlim=(0, L), ylim=(0, L))
->>> particles, = ax.plot([], [], 'bo', ms=6)
-...
->>> def animate(i):
-...     index, x, y, m = a.MoveParticles().T
-...     particles.set_data(x, y)
-...     return particles
-...
->>> ani = animation.FuncAnimation(fig, animate)
-...
 >>> # Plotting code
 ... a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G, N)
 ...

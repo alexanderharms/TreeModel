@@ -174,27 +174,42 @@
 ```python
 >>> # Variables
 ... N = 128 # Number of particles
->>> L = 1
->>> dt = 1
+>>> L = 100 # [AU]
+>>> dt = 1 # [years]
 >>> # Generate random positions
 ... ids = np.linspace(1, N, N)
->>> randpos = np.random.uniform(0, L, (N, 2))
->>> mass = np.ones(N)
+>>> #randpos = np.random.uniform(0, L, (N, 2))
+... randr = np.random.uniform(-L/2, L/2, N)
+>>> randtheta = np.random.uniform(0, 2*np.pi, N)
+>>> randx = randr * np.cos(randtheta) + L/2
+>>> randy = randr * np.sin(randtheta) + L/2
+>>> randveltheta = np.random.normal(0, np.sqrt(0.1), N)
+>>> randvelx = - randveltheta * np.sin(randtheta)
+>>> randvely = randveltheta * np.cos(randtheta)
+...
+>>> mass = np.ones(N) # [Solar mass]
 >>> poslist = np.zeros((N, 4))
 >>> vellist = np.zeros((N, 3))
 >>> poslist[:, 0] = ids
->>> poslist[:, 1:3] = randpos[:,0:]
+>>> #poslist[:, 1:3] = randpos[:,0:]
+... poslist[:, 1] = randx
+>>> poslist[:, 2] = randy
 >>> poslist[:, 3] = mass
 >>> vellist[:, 0] = ids
->>> vellist[:, 1:] = np.random.normal(0, np.sqrt(100), (N, 2))
->>> G = 6.64e-11
->>> # plt.figure()
-... # plt.scatter(poslist[:, 1], poslist[:, 2])
-... # plt.show()
+>>> #vellist[:, 1:] = np.random.normal(0, np.sqrt(100), (N, 2))#vellist[:, 1:] = np.random.normal(0, np.sqrt(10), (N, 2))
+... vellist[:, 1] = randvelx
+>>> vellist[:, 2] = randvely
+>>> #G = 3.9e67 # [AU]**2/([Solar mass] * [year]**2)
+... G = 1
+>>> plt.figure()
+>>> plt.scatter(poslist[:, 1], poslist[:, 2])
+>>> plt.xlim([0, L])
+>>> plt.ylim([0, L])
+>>> plt.show()
 ```
 
 ```python
->>> # Plottin code
+>>> # Plotting code
 ... a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G, N)
 ...
 >>> fig = plt.figure()
@@ -207,6 +222,27 @@
 ...     return particles
 ...
 >>> ani = animation.FuncAnimation(fig, animate)
+...
+>>> # Plotting code
+... a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G, N)
+...
+>>> fig = plt.figure()
+>>> ax = fig.add_subplot(111, aspect='equal', autoscale_on=False, xlim=(0, L), ylim=(0, L))
+>>> particles, = ax.plot([], [], 'bo', ms=6)
+...
+>>> def animate(i):
+...     index, x, y, m = a.MoveParticles().T
+...     particles.set_data(x, y)
+...     return particles
+...
+>>> def save_anim(file, title):
+...     "saves the animation with a desired title"
+...     Writer = animation.writers['ffmpeg']
+...     writer = Writer(fps=25, metadata=dict(artist='Me'), bitrate=1800)
+...     file.save(title + '.mp4', writer=writer)
+...
+>>> ani = animation.FuncAnimation(fig, animate, frames=10, repeat=False)
+>>> save_anim(ani, 'Test')
 >>> plt.show()
 ```
 

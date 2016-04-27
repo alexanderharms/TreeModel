@@ -1,6 +1,6 @@
 ```python
->>> #%matplotlib inline
-... %load_ext Cython
+>>> %matplotlib inline
+>>> %load_ext Cython
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
 >>> from matplotlib import animation
@@ -10,16 +10,19 @@ The Cython extension is already loaded. To reload it, use:
 
 ```python
 >>> %%cython
-... import numpy as np
-... cimport numpy as np
+... #import numpy as np
+... #cimport numpy as np
 ... # DTYPE = np.float_
 ... # ctypedef np.float_t DTYPE_t
 ...
 ... class QuadTree:
 ...
-...     def __init__(self, np.ndarray[np.float_t, ndim=2] poslist, np.ndarray[np.float_t, ndim=2] vellist, \
-...                  double xmin, double ymin, double xmax, double ymax, double L, double dt, double G, int depth):
+...     def __init__(self, list poslist, list vellist, \
+...                  double xmin, double ymin, double zmin, double xmax, double ymax, double zmax, \
+...                  double L, double dt, double G, int N, int depth):
 ...
+...         cdef int rr
+...         #for rr in range(len(poslist)):
 ...         self.poslist = poslist
 ...         self.vellist = vellist
 ...         self.depth = depth
@@ -27,113 +30,172 @@ The Cython extension is already loaded. To reload it, use:
 ...         self.xmax = xmax
 ...         self.ymin = ymin
 ...         self.ymax = ymax
+...         self.zmin = zmin
+...         self.zmax = zmax
 ...         self.L = L
 ...         self.dt = dt
 ...         self.G = G
 ...
-...         cdef float xmid, ymid
-...         cdef np.ndarray[np.float_t, ndim=1] mins, maxs
-...         cdef np.ndarray[np.float_t, ndim=2] F
+...         cdef double xmid, ymid, zmid
+...         cdef double F[128][2]
+...         cdef double sizesx, sizesy, sizesz
 ...
-...         self.mins = np.asarray([self.xmin, self.ymin])
-...         self.maxs = np.asarray([self.xmax, self.ymax])
-...         self.sizes = self.maxs - self.mins
+...         self.sizesx = self.xmax - self.xmin
+...         self.sizesy = self.ymax - self.ymin
+...         self.sizesz = self.zmax - self.zmin
 ...         self.children = []
-...         self.mids = (self.mins + self.maxs)/2
-...         self.xmid, self.ymid = self.mids
+...         self.xmid = (self.xmin + self.xmax)/2
+...         self.ymid = (self.ymin + self.ymax)/2
+...         self.zmid = (self.zmin + self.zmax)/2
 ...
 ...         self.CreateTree()
 ...         self.F = self.CalcTF()
 ...
 ...     def CreateTree(self):
 ...
-...         cdef np.ndarray[np.float_t, ndim=2] q1, q2, q3, q4, q1vel, q2vel, q3vel, q4vel
+...         cdef double q1[1][2]
+...         cdef double q2[1][2]
+...         cdef double q3[1][2]
+...         cdef double q4[1][2]
+...         cdef double q1vel[1][2]
+...         cdef double q2vel[1][2]
+...         cdef double q3vel[1][2]
+...         cdef double q4vel[1][2]
+...
+...         cdef int qq1
 ...         if self.depth > 0:
+...             for qq1 in range(len(self.poslist)):
+...                 if (self.poslist[qq1][0] < self.xmid) & (self.poslist[qq1][2] > self.ymid):
+...                     if qq1 == 0:
+...                         q1[qq1][0] = self.poslist[qq1][0]
+...                         q1[qq1][1] = self.poslist[qq1][1]
+...                         q1vel[qq1][0] = self.vellist[qq1][0]
+...                         q1vel[qq1][1] = self.vellist[qq1][1]
+...                     else:
+...                         q1.append([self.poslist[qq1][0], self.poslist[qq1][1]])
+...                         q1vel.append([self.vellist[qq1][0], self.vellist[qq1][1]])
+...                 elif (self.poslist[qq1][0] > self.xmid) & (self.poslist[qq1][1] > self.ymid):
+...                     if qq1 == 0:
+...                         q2[qq1][0] = self.poslist[qq1][0]
+...                         q2[qq1][1] = self.poslist[qq1][1]
+...                         q2vel[qq1][0] = self.vellist[qq1][0]
+...                         q2vel[qq1][1] = self.vellist[qq1][1]
+...                     else:
+...                         q2.append([self.poslist[qq1][0], self.poslist[qq1][1]])
+...                         q2vel.append([self.vellist[qq1][0], self.vellist[qq1][1]])
+...                 elif (self.poslist[qq1][0] < self.xmid) & (self.poslist[qq1][1] < self.ymid):
+...                     if qq1 == 0:
+...                         q3[qq1][0] = self.poslist[qq1][0]
+...                         q3[qq1][1] = self.poslist[qq1][1]
+...                         q3vel[qq1][0] = self.vellist[qq1][0]
+...                         q3vel[qq1][1] = self.vellist[qq1][1]
+...                     else:
+...                         q3.append([self.poslist[qq1][0], self.poslist[qq1][1]])
+...                         q3vel.append([self.vellist[qq1][0], self.vellist[qq1][1]])
+...                 elif (self.poslist[qq1][0] > self.xmid) & (self.poslist[qq1][1] < self.ymid):
+...                     if qq1 == 0:
+...                         q4[qq1][0] = self.poslist[qq1][0]
+...                         q4[qq1][1] = self.poslist[qq1][1]
+...                         q4vel[qq1][0] = self.vellist[qq1][0]
+...                         q4vel[qq1][1] = self.vellist[qq1][1]
+...                     else:
+...                         q4.append([self.poslist[qq1][0], self.poslist[qq1][1]])
+...                         q4vel.append([self.vellist[qq1][0], self.vellist[qq1][1]])
 ...
-...             q1 = self.poslist[(self.poslist[:,1] < self.mids[0]) & (self.poslist[:,2] > self.mids[1])]
-...             q1vel = self.vellist[(self.poslist[:,1] < self.mids[0]) & (self.poslist[:,2] > self.mids[1])]
-...             q2 = self.poslist[(self.poslist[:,1] > self.mids[0]) & (self.poslist[:,2] > self.mids[1])]
-...             q2vel = self.vellist[(self.poslist[:,1] > self.mids[0]) & (self.poslist[:,2] > self.mids[1])]
-...             q3 = self.poslist[(self.poslist[:,1] < self.mids[0]) & (self.poslist[:,2] < self.mids[1])]
-...             q3vel = self.vellist[(self.poslist[:,1] < self.mids[0]) & (self.poslist[:,2] < self.mids[1])]
-...             q4 = self.poslist[(self.poslist[:,1] > self.mids[0]) & (self.poslist[:,2] < self.mids[1])]
-...             q4vel = self.vellist[(self.poslist[:,1] > self.mids[0]) & (self.poslist[:,2] < self.mids[1])]
 ...
-...             if q1.shape[0] > 1:
-...                 self.children.append(QuadTree(q1, q1vel, self.xmin, self.ymid, self.xmid, self.ymax, self.L, self.dt, \
+...         if len(q1) > 1:
+...             self.children.append(QuadTree(q1, q1vel, self.xmin, self.ymid, 0, self.xmid, self.ymax, 0, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
-...             if q2.shape[0] > 1:
-...                 self.children.append(QuadTree(q2, q2vel, self.xmid, self.ymid, self.xmax, self.ymax, self.L, self.dt, \
+...         if len(q2) > 1:
+...             self.children.append(QuadTree(q2, q2vel, self.xmid, self.ymid, 0, self.xmax, self.ymax, 0, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
-...             if q3.shape[0] > 1:
-...                 self.children.append(QuadTree(q3, q3vel, self.xmin, self.ymin, self.xmid, self.ymid, self.L, self.dt, \
+...         if len(q3) > 1:
+...             self.children.append(QuadTree(q3, q3vel, self.xmin, self.ymin, 0, self.xmid, self.ymid, 0, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
-...             if q4.shape[0] > 1:
-...                 self.children.append(QuadTree(q4, q4vel, self.xmid, self.ymin, self.xmax, self.ymid, self.L, self.dt, \
+...         if len(q4) > 1:
+...             self.children.append(QuadTree(q4, q4vel, self.xmid, self.ymin, 0, self.xmax, self.ymid, 0, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
-...     def CalcF(self, np.ndarray[np.float_t, ndim=1] particle):
-...         cdef int a, ii, jj
-...         cdef float x, y, m, CMRr, CMrsqsum, F1x, F1y, sumposx, sumposy
-...         cdef np.ndarray[np.float_t, ndim=1] CM, CMrvec, CMrvecsq
-...         global F1x, F1y
+...     def CalcF(self, list particle):
+...         cdef int ii, jj, ll
+...         cdef double CMr, F1x, F1y, F1z, sumposx, sumposy, sumposz
+...         cdef double x
+...         cdef double y
+...         cdef double z
+...         cdef double m
+...         cdef double CM[3]
+...         cdef double CMrvec[3]
+...         cdef double CMrsq
+...         global F1x, F1y, F1z
 ...
-...         if self.sizes[0] == self.L:
+...         if self.sizesx == self.L:
 ...             F1x = 0
 ...             F1y = 0
-...         if self.poslist.size != 0:
-...             a, x, y, m = particle
+...             F1z = 0
+...         if len(self.poslist) != 0:
+...             x = particle[0]
+...             y = particle[1]
+...             z = particle[2]
+...             m = particle[3]
 ...             sumposx = 0
 ...             sumposy = 0
 ...             summass = 0
-...             for ii in range(len(self.poslist[:,0])):
-...                 sumposx += self.poslist[ii, 3] * self.poslist[ii, 1]
-...                 sumposy += self.poslist[ii, 3] * self.poslist[ii, 2]
-...                 summass += self.poslist[ii, 3]
-...             CM = np.asarray([sumposx / summass, sumposy / summass])
-...             CMrvec = CM - [x, y] + 0.01
-...             CMrvecsq = CMrvec**2
-...             CMrsqsum = CMrvecsq[0] + CMrvecsq[1]
-...             CMr = CMrsqsum**(0.5)
-...             if (self.sizes[0]/CMr < 1) or (self.children==[]):
-...                 F1x += (self.G * m * summass /(CMr**2)) * CMrvec[0]
-...                 F1y += (self.G * m * summass /(CMr**2)) * CMrvec[1]
+...             for ii in range(len(self.poslist)):
+...                 sumposx += self.poslist[ii][3] * self.poslist[ii][0]
+...                 sumposy += self.poslist[ii][3] * self.poslist[ii][1]
+...                 sumposz += self.poslist[ii][3] * self.poslist[ii][2]
+...                 summass += self.poslist[ii][3]
+...             CM = [sumposx / summass, sumposy / summass, sumposz / summass]
+...             CMrvec[0] = CM[0] - x + 0.01
+...             CMrvec[1] = CM[1] - y + 0.01
+...             CMrvec[2] = CM[2] - z + 0.01
+...             CMrsq = CMrvec[0] * CMrvec[0] + CMrvec[1] * CMrvec[1] + CMrvec[2] * CMrvec[2]
+...             CMr = CMrsq**(0.5)
+...             if (self.sizesx /CMr < 1) or (self.children==[]):
+...                 F1x += (self.G * m * summass /(CMr*CMrsq)) * CMrvec[0]
+...                 F1y += (self.G * m * summass /(CMr*CMrsq)) * CMrvec[1]
+...                 F1z += (self.G * m * summass /(CMr*CMrsq)) * CMrvec[2]
 ...             else:
 ...                 for jj in range(len(self.children)):
 ...                     self.children[jj].CalcF(particle)
-...         return F1x, F1y
+...         return F1x, F1y, F1z
 ...
 ...
 ...     def CalcTF(self):
-...         cdef np.ndarray[dtype=np.float_t, ndim=2] F = np.zeros((self.poslist[:,0].size,2))
+...         cdef double F[128][3]
 ...         cdef int j
 ...
-...         for j in range(self.poslist[:,0].size):
-...             F[j,:] = self.CalcF(self.poslist[j,:])
+...         for j in range(len(self.poslist)):
+...             F[j] = self.CalcF(self.poslist[j])
 ...         self.F = F
 ...         return F
 ...
 ...     def MoveParticles(self):
 ...         cdef int k, k2
 ...
-...         for k in range(self.poslist[:, 0].size):
+...         for k in range(len(self.poslist)):
 ...             # Calculate velocity, 1st step
-...             self.vellist[k, 1] += 0.5 * self.F[k, 0] * self.dt
-...             self.vellist[k, 2] += 0.5 * self.F[k, 1] * self.dt
+...             self.vellist[k][0] += 0.5 * self.F[k][0] * self.dt
+...             self.vellist[k][1] += 0.5 * self.F[k][1] * self.dt
+...             self.vellist[k][2] += 0.5 * self.F[k][2] * self.dt
 ...             # Calculate new positions
-...             self.poslist[k, 1] += self.vellist[k, 1] * self.dt
-...             self.poslist[k, 2] += self.vellist[k, 2] * self.dt
-...             self.poslist[k, 1] = self.poslist[k, 1] % self.L
-...             self.poslist[k, 2] = self.poslist[k, 2] % self.L
+...             self.poslist[k][0] += self.vellist[k][0] * self.dt
+...             self.poslist[k][1] += self.vellist[k][1] * self.dt
+...             self.poslist[k][2] += self.vellist[k][2] * self.dt
+...             self.poslist[k][0] = self.poslist[k][0] % self.L
+...             self.poslist[k][1] = self.poslist[k][1] % self.L
+...             self.poslist[k][2] = self.poslist[k][2] % self.L
+...
 ...
 ...         self.F = self.CalcTF()
-...         for k2 in range(self.poslist[:, 0].size):
+...         for k2 in range(len(self.poslist)):
 ...             # Calculate velocity, 2nd step
-...             self.vellist[k2, 1] += 0.5 * self.F[k2, 0] * self.dt
-...             self.vellist[k2, 2] += 0.5 * self.F[k2, 1] * self.dt
+...             self.vellist[k2][0] += 0.5 * self.F[k2][0] * self.dt
+...             self.vellist[k2][1] += 0.5 * self.F[k2][1] * self.dt
+...             self.vellist[k2][2] += 0.5 * self.F[k2][2] * self.dt
 ...         self.CreateTree
 ...         return self.poslist
 ...
@@ -162,15 +224,15 @@ The Cython extension is already loaded. To reload it, use:
 >>> mass = np.ones(N) # [Solar mass]
 >>> poslist = np.zeros((N, 4))
 >>> vellist = np.zeros((N, 3))
->>> poslist[:, 0] = ids
 >>> #poslist[:, 1:3] = randpos[:,0:]
-... poslist[:, 1] = randx
->>> poslist[:, 2] = randy
+... poslist[:, 0] = randx
+>>> poslist[:, 1] = randy
 >>> poslist[:, 3] = mass
->>> vellist[:, 0] = ids
+>>> poslist.tolist()
 >>> #vellist[:, 1:] = np.random.normal(0, np.sqrt(100), (N, 2))#vellist[:, 1:] = np.random.normal(0, np.sqrt(10), (N, 2))
-... vellist[:, 1] = randvelx
->>> vellist[:, 2] = randvely
+... vellist[:, 0] = randvelx
+>>> vellist[:, 1] = randvely
+>>> vellist.tolist()
 >>> #G = 3.9e67 # [AU]**2/([Solar mass] * [year]**2)
 ... G = 1
 >>> # plt.figure()
@@ -181,21 +243,35 @@ The Cython extension is already loaded. To reload it, use:
 ```
 
 ```python
->>> nt = 50
->>> a = QuadTree(poslist, veslist, 0, 0, L, L, L, dt, G, N)
->>> a.Simulate(nt)
+>>> %%timeit
+... nt = 100
+... a = QuadTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N, N)
+... a.Simulate(nt)
+... xx = np.zeros(N)
+... yy = np.zeros(N)
+... for iii in range(len(poslist)):
+...     xx[iii] = poslist[iii][0]
+...     yy[iii] = poslist[iii][1]
+... plt.figure()
+... plt.scatter(xx, yy)
+... plt.show()
+
+
+
+
+1 loop, best of 3: 272 ms per loop
 ```
 
 ```python
 >>> # Plotting code
-... a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G, N)
+... a = QuadTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N, N)
 ...
 >>> fig = plt.figure()
 >>> ax = fig.add_subplot(111, aspect='equal', autoscale_on=False, xlim=(0, L), ylim=(0, L))
 >>> particles, = ax.plot([], [], 'bo', ms=6)
 ...
 >>> def animate(i):
-...     index, x, y, m = a.MoveParticles().T
+...     x, y, m = a.MoveParticles().T
 ...     particles.set_data(x, y)
 ...     return particles
 ...
@@ -211,7 +287,33 @@ The Cython extension is already loaded. To reload it, use:
 ```
 
 ```python
+>>> a = [[1, 2, 2], [3, 4, 2]]
+>>> print(a)
+>>> print(len(a))
+>>> a[1][1]
+[[1, 2, 2], [3, 4, 2]]
+2
+4
+```
 
+```python
+>>> len(poslist.tolist())
+64
+```
+
+```python
+>>> print m
+```
+
+```python
+>>> print(m)
+```
+
+```python
+>>> m = [1.0]
+>>> m.append(2)
+>>> print(m)
+[1.0, 2]
 ```
 
 ```python

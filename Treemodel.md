@@ -172,9 +172,9 @@
 
 ```python
 >>> # Variables
-... N = 512 # Number of particles
->>> L = 10
->>> dt = 0.004
+... N = 1024 # Number of particles
+>>> L = 1e
+>>> dt = 1
 >>> # Generate random positions
 ... ids = np.linspace(1, N, N)
 >>> randpos = np.random.uniform(0, L, (N, 2))
@@ -193,12 +193,11 @@
 ```
 
 ```python
->>> %%timeit
-... a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G, N)
-... a.Simulate()
-... plt.figure()
-... plt.scatter(poslist[:, 1], poslist[:, 2])
-... plt.show()
+>>> a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G, N)
+>>> a.Simulate()
+>>> plt.figure()
+>>> plt.scatter(poslist[:, 1], poslist[:, 2])
+>>> plt.show()
 ```
 
 ```python

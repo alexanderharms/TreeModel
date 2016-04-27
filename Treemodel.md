@@ -6,8 +6,6 @@
 >>> import sys
 >>> import scipy.stats as spstats
 >>> from mpl_toolkits.mplot3d import Axes3D
-The Cython extension is already loaded. To reload it, use:
-  %reload_ext Cython
 ```
 
 ```python
@@ -75,34 +73,34 @@ The Cython extension is already loaded. To reload it, use:
 ...             q8vel = self.vellist[(self.poslist[:,0] > self.mids[0]) & (self.poslist[:,1] < self.mids[1]) & (self.poslist[:,2] > self.mids[2])]
 ...
 ...             if q1.shape[0] > 1:
-...                 self.children.append(QuadTree(q1, q1vel, self.xmin, self.ymid, self.zmin, self.xmid, self.ymax, self.zmid, self.L, self.dt, \
+...                 self.children.append(OctoTree(q1, q1vel, self.xmin, self.ymid, self.zmin, self.xmid, self.ymax, self.zmid, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...             if q2.shape[0] > 1:
-...                 self.children.append(QuadTree(q2, q2vel, self.xmid, self.ymid, self.zmin, self.xmax, self.ymax, self.zmid, self.L, self.dt, \
+...                 self.children.append(OctoTree(q2, q2vel, self.xmid, self.ymid, self.zmin, self.xmax, self.ymax, self.zmid, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...             if q3.shape[0] > 1:
-...                 self.children.append(QuadTree(q3, q3vel, self.xmin, self.ymin, self.zmin, self.xmid, self.ymid, self.zmid, self.L, self.dt, \
+...                 self.children.append(OctoTree(q3, q3vel, self.xmin, self.ymin, self.zmin, self.xmid, self.ymid, self.zmid, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...             if q4.shape[0] > 1:
-...                 self.children.append(QuadTree(q4, q4vel, self.xmid, self.ymin, self.zmin, self.xmax, self.ymid, self.zmid, self.L, self.dt, \
+...                 self.children.append(OctoTree(q4, q4vel, self.xmid, self.ymin, self.zmin, self.xmax, self.ymid, self.zmid, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...             if q5.shape[0] > 1:
-...                 self.children.append(QuadTree(q5, q5vel, self.xmin, self.ymid, self.zmid, self.xmid, self.ymax, self.zmax, self.L, self.dt, \
+...                 self.children.append(OctoTree(q5, q5vel, self.xmin, self.ymid, self.zmid, self.xmid, self.ymax, self.zmax, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...             if q6.shape[0] > 1:
-...                 self.children.append(QuadTree(q6, q6vel, self.xmid, self.ymid, self.zmid, self.xmax, self.ymax, self.zmax, self.L, self.dt, \
+...                 self.children.append(OctoTree(q6, q6vel, self.xmid, self.ymid, self.zmid, self.xmax, self.ymax, self.zmax, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...             if q7.shape[0] > 1:
-...                 self.children.append(QuadTree(q7, q7vel, self.xmin, self.ymin, self.zmid, self.xmid, self.ymid, self.zmax, self.L, self.dt, \
+...                 self.children.append(OctoTree(q7, q7vel, self.xmin, self.ymin, self.zmid, self.xmid, self.ymid, self.zmax, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...             if q8.shape[0] > 1:
-...                 self.children.append(QuadTree(q8, q8vel, self.xmid, self.ymin, self.zmid, self.xmax, self.ymid, self.zmax, self.L, self.dt, \
+...                 self.children.append(OctoTree(q8, q8vel, self.xmid, self.ymin, self.zmid, self.xmax, self.ymid, self.zmax, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...     def CalcF(self, np.ndarray[np.float_t, ndim=1] particle):
@@ -318,10 +316,6 @@ The Cython extension is already loaded. To reload it, use:
 >>> ax.set_ylabel('Y Label')
 >>> ax.set_zlabel('Z Label')
 >>> plt.show()
-```
-
-```python
->>> sys.getrecursionlimit()
 ```
 
 ```python

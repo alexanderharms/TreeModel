@@ -4,8 +4,7 @@
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
 >>> from matplotlib import animation
-The Cython extension is already loaded. To reload it, use:
-  %reload_ext Cython
+>>> import sys
 ```
 
 ```python
@@ -37,7 +36,7 @@ The Cython extension is already loaded. To reload it, use:
 ...         self.G = G
 ...
 ...         cdef double xmid, ymid, zmid
-...         cdef double F[128][2]
+...         cdef double F[1024][2]
 ...         cdef double sizesx, sizesy, sizesz
 ...
 ...         self.sizesx = self.xmax - self.xmin
@@ -173,7 +172,7 @@ The Cython extension is already loaded. To reload it, use:
 ...
 ...
 ...     def CalcTF(self):
-...         cdef double F[128][3]
+...         cdef double F[1024][3]
 ...         cdef int j
 ...
 ...         for j in range(len(self.poslist)):
@@ -215,7 +214,8 @@ The Cython extension is already loaded. To reload it, use:
 
 ```python
 >>> # Variables
-... N = 128 # Number of particles
+... N = 1024 # Number of particles
+>>> sys.setrecursionlimit(N)
 >>> L = 100 # [AU]
 >>> dt = 1 # [years]
 >>> # Generate random positions
@@ -263,11 +263,6 @@ The Cython extension is already loaded. To reload it, use:
 ... plt.figure()
 ... plt.scatter(xx, yy)
 ... plt.show()
-
-
-
-
-1 loop, best of 3: 272 ms per loop
 ```
 
 ```python
@@ -299,14 +294,10 @@ The Cython extension is already loaded. To reload it, use:
 >>> print(a)
 >>> print(len(a))
 >>> a[1][1]
-[[1, 2, 2], [3, 4, 2]]
-2
-4
 ```
 
 ```python
 >>> len(poslist.tolist())
-64
 ```
 
 ```python
@@ -321,7 +312,6 @@ The Cython extension is already loaded. To reload it, use:
 >>> m = [1.0]
 >>> m.append(2)
 >>> print(m)
-[1.0, 2]
 ```
 
 ```python

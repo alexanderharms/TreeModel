@@ -4,6 +4,8 @@
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
 >>> import sys
+>>> from matplotlib import animation, rc
+>>> from IPython.display import HTML
 ```
 
 ```python
@@ -138,42 +140,42 @@
 ...         self.F = F
 ...         return F
 ...
-... #     def MoveParticles(self):
-...
-... #         # Verlet voor 1 stap
-... #         for k in range(self.poslist[:,0].size):
-...
-...     def Simulate(self):
-...         cdef np.ndarray F
-...         #assert F.dtype == DTYPE
-...         cdef int i
+...     def MoveParticles(self, F=None):
+...         if F == None:
+...             F = self.F
 ...         cdef int k
 ...         cdef int k2
-...         F = self.CalcTF()
-...         for i in range(100): # aantal tijdstappen
-...             for k in range(self.poslist[:, 0].size):
-...                 # Calculate velocity, 1st step
-...                 self.vellist[k, 1] += 0.5 * F[k, 0] * self.dt
-...                 self.vellist[k, 2] += 0.5 * F[k, 1] * self.dt
-...                 # Calculate new positions
-...                 self.poslist[k, 1] += self.vellist[k, 1] * self.dt
-...                 self.poslist[k, 2] += self.vellist[k, 2] * self.dt
-...                 self.poslist[k, 1] = self.poslist[k, 1] % self.L
-...                 self.poslist[k, 2] = self.poslist[k, 2] % self.L
+...         #cdef np.ndarray F
+...         for k in range(self.poslist[:, 0].size):
+...             # Calculate velocity, 1st step
+...             self.vellist[k, 1] += 0.5 * F[k, 0] * self.dt
+...             self.vellist[k, 2] += 0.5 * F[k, 1] * self.dt
+...             # Calculate new positions
+...             self.poslist[k, 1] += self.vellist[k, 1] * self.dt
+...             self.poslist[k, 2] += self.vellist[k, 2] * self.dt
+...             self.poslist[k, 1] = self.poslist[k, 1] % self.L
+...             self.poslist[k, 2] = self.poslist[k, 2] % self.L
 ...
-...             F = self.CalcTF()
-...             for k2 in range(self.poslist[:, 0].size):
-...                 # Calculate velocity, 2nd step
-...                 self.vellist[k2, 1] += 0.5 * F[k2, 0] * self.dt
-...                 self.vellist[k2, 2] += 0.5 * F[k2, 1] * self.dt
-... #             #self.MoveParticles()
-...             self.CreateTree
+...         self.F = self.CalcTF()
+...         for k2 in range(self.poslist[:, 0].size):
+...             # Calculate velocity, 2nd step
+...             self.vellist[k2, 1] += 0.5 * F[k2, 0] * self.dt
+...             self.vellist[k2, 2] += 0.5 * F[k2, 1] * self.dt
+...         self.CreateTree
+...
+...     def Simulate(self):
+...         cdef np.ndarray F0
+...         #assert F.dtype == DTYPE
+...         cdef int i
+...         F0 = self.CalcTF()
+...         for i in range(100): # aantal tijdstappen
+...             self.MoveParticles(F0)
 ```
 
 ```python
 >>> # Variables
-... N = 1024 # Number of particles
->>> L = 1e
+... N = 128 # Number of particles
+>>> L = 1
 >>> dt = 1
 >>> # Generate random positions
 ... ids = np.linspace(1, N, N)
@@ -198,10 +200,8 @@
 >>> plt.figure()
 >>> plt.scatter(poslist[:, 1], poslist[:, 2])
 >>> plt.show()
-```
-
-```python
->>> sys.getrecursionlimit()
+C:\Users\skros\Anaconda3\lib\site-packages\ipykernel\__main__.py:2: FutureWarning: comparison to `None` will result in an elementwise object comparison in the future.
+  from ipykernel import kernelapp as app
 ```
 
 ```python

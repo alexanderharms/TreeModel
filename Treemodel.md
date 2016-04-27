@@ -12,15 +12,13 @@ The Cython extension is already loaded. To reload it, use:
 >>> %%cython
 ... import numpy as np
 ... cimport numpy as np
-... DTYPE = np.float_
-... ctypedef np.float_t DTYPE_t
+... # DTYPE = np.float_
+... # ctypedef np.float_t DTYPE_t
 ...
 ... class QuadTree:
 ...
 ...     def __init__(self, np.ndarray[np.float_t, ndim=2] poslist, np.ndarray[np.float_t, ndim=2] vellist, \
 ...                  double xmin, double ymin, double xmax, double ymax, double L, double dt, double G, int depth):
-...         #assert poslist.dtype == DTYPE
-...         #assert vellist.dtype == DTYPE
 ...
 ...         self.poslist = poslist
 ...         self.vellist = vellist
@@ -33,17 +31,9 @@ The Cython extension is already loaded. To reload it, use:
 ...         self.dt = dt
 ...         self.G = G
 ...
-... #         if self.xmin is None:
-... #             self.xmax, self.ymax = np.amax(poslist, axis=0)[1:3]
-... #             self.xmin, self.ymin = np.amin(poslist, axis=0)[1:3]
-...         #assert mins.dtype == DTYPE
-...         #assert maxs.dtype == DTYPE
-...         #assert sizes.dtype == DTYPE
-...         #assert children.dtype == DTYPE
-...         #assert mids.dtype == DTYPE
 ...         cdef float xmid, ymid
 ...         cdef np.ndarray[np.float_t, ndim=1] mins, maxs
-...         cdef np.ndarray F
+...         cdef np.ndarray[np.float_t, ndim=2] F
 ...
 ...         self.mins = np.asarray([self.xmin, self.ymin])
 ...         self.maxs = np.asarray([self.xmax, self.ymax])
@@ -86,25 +76,9 @@ The Cython extension is already loaded. To reload it, use:
 ...                                               self.G, self.depth-1))
 ...
 ...     def CalcF(self, np.ndarray[np.float_t, ndim=1] particle):
-...         cdef int a
-...         cdef float x, y
-...         cdef float m
-...         cdef np.ndarray[np.float_t, ndim=1] CM
-...         #assert CM.dtype == DTYPE
-...         cdef np.ndarray[np.float_t, ndim=1] CMrvec
-...         cdef np.ndarray[np.float_t, ndim=1] CMrvecsq
-...
-...         #assert CMrvec.dtype == DTYPE
-...         #assert CMrvecsq.dtype == DTYPE
-...
-...         cdef float CMrsqsum
-...         cdef float CMr
-...         cdef float F1x
-...         cdef float F1y
-...         cdef int ii
-...         cdef int jj
-...         cdef float sumposx
-...         cdef float sumposy
+...         cdef int a, ii, jj
+...         cdef float x, y, m, CMRr, CMrsqsum, F1x, F1y, sumposx, sumposy
+...         cdef np.ndarray[np.float_t, ndim=1] CM, CMrvec, CMrvecsq
 ...         global F1x, F1y
 ...
 ...         if self.sizes[0] == self.L:
@@ -134,7 +108,7 @@ The Cython extension is already loaded. To reload it, use:
 ...
 ...
 ...     def CalcTF(self):
-...         cdef np.ndarray F = np.zeros((self.poslist[:,0].size,2), dtype=DTYPE)
+...         cdef np.ndarray[dtype=np.float_t, ndim=2] F = np.zeros((self.poslist[:,0].size,2))
 ...         cdef int j
 ...
 ...         for j in range(self.poslist[:,0].size):
@@ -143,9 +117,8 @@ The Cython extension is already loaded. To reload it, use:
 ...         return F
 ...
 ...     def MoveParticles(self):
-...         cdef int k
-...         cdef int k2
-...         #cdef np.ndarray F
+...         cdef int k, k2
+...
 ...         for k in range(self.poslist[:, 0].size):
 ...             # Calculate velocity, 1st step
 ...             self.vellist[k, 1] += 0.5 * self.F[k, 0] * self.dt
@@ -164,10 +137,9 @@ The Cython extension is already loaded. To reload it, use:
 ...         self.CreateTree
 ...         return self.poslist
 ...
-...     def Simulate(self):
-...         #assert F.dtype == DTYPE
+...     def Simulate(self, int nt):
 ...         cdef int i
-...         for i in range(100): # aantal tijdstappen
+...         for i in range(nt): # aantal tijdstappen
 ...             self.MoveParticles()
 ```
 
@@ -201,11 +173,17 @@ The Cython extension is already loaded. To reload it, use:
 >>> vellist[:, 2] = randvely
 >>> #G = 3.9e67 # [AU]**2/([Solar mass] * [year]**2)
 ... G = 1
->>> plt.figure()
->>> plt.scatter(poslist[:, 1], poslist[:, 2])
->>> plt.xlim([0, L])
->>> plt.ylim([0, L])
->>> plt.show()
+>>> # plt.figure()
+... # plt.scatter(poslist[:, 1], poslist[:, 2])
+... # plt.xlim([0, L])
+... # plt.ylim([0, L])
+... # plt.show()
+```
+
+```python
+>>> nt = 50
+>>> a = QuadTree(poslist, veslist, 0, 0, L, L, L, dt, G, N)
+>>> a.Simulate(nt)
 ```
 
 ```python
@@ -230,6 +208,10 @@ The Cython extension is already loaded. To reload it, use:
 >>> ani = animation.FuncAnimation(fig, animate, frames=10, repeat=False)
 >>> save_anim(ani, 'Test')
 >>> plt.show()
+```
+
+```python
+
 ```
 
 ```python

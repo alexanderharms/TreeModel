@@ -3,6 +3,7 @@
 >>> %load_ext Cython
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
+>>> import sys
 ```
 
 ```python
@@ -15,7 +16,7 @@
 ... class QuadTree:
 ...
 ...     def __init__(self, np.ndarray[np.float_t, ndim=2] poslist, np.ndarray[np.float_t, ndim=2] vellist, \
-...                  double xmin, double ymin, double xmax, double ymax, double L, double dt, double G, int depth=5):
+...                  double xmin, double ymin, double xmax, double ymax, double L, double dt, double G, int depth):
 ...         #assert poslist.dtype == DTYPE
 ...         #assert vellist.dtype == DTYPE
 ...
@@ -64,25 +65,26 @@
 ...             q4 = self.poslist[(self.poslist[:,1] > self.mids[0]) & (self.poslist[:,2] < self.mids[1])]
 ...             q4vel = self.vellist[(self.poslist[:,1] > self.mids[0]) & (self.poslist[:,2] < self.mids[1])]
 ...
-...             if q1.shape[1] > 1:
+...             if q1.shape[0] > 1:
 ...                 self.children.append(QuadTree(q1, q1vel, self.xmin, self.ymid, self.xmid, self.ymax, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
-...             if q2.shape[1] > 1:
+...             if q2.shape[0] > 1:
 ...                 self.children.append(QuadTree(q2, q2vel, self.xmid, self.ymid, self.xmax, self.ymax, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
-...             if q3.shape[1] > 1:
+...             if q3.shape[0] > 1:
 ...                 self.children.append(QuadTree(q3, q3vel, self.xmin, self.ymin, self.xmid, self.ymid, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
-...             if q4.shape[1] > 1:
+...             if q4.shape[0] > 1:
 ...                 self.children.append(QuadTree(q4, q4vel, self.xmid, self.ymin, self.xmax, self.ymid, self.L, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...     def CalcF(self, np.ndarray[np.float_t, ndim=1] particle):
 ...         cdef int a
 ...         cdef float x, y
+...         cdef float m
 ...         cdef np.ndarray[np.float_t, ndim=1] CM
 ...         #assert CM.dtype == DTYPE
 ...         cdef np.ndarray[np.float_t, ndim=1] CMrvec
@@ -105,20 +107,22 @@
 ...             F1x = 0
 ...             F1y = 0
 ...         if self.poslist.size != 0:
-...             a, x, y = particle
+...             a, x, y, m = particle
+...             sumposx = 0
+...             sumposy = 0
+...             summass = 0
 ...             for ii in range(len(self.poslist[:,0])):
-...                 sumposx = 0
-...                 sumposx += self.poslist[ii, 1]
-...                 sumposy = 0
-...                 sumposy += self.poslist[ii, 2]
-...             CM = np.asarray([sumposx /(self.poslist[:,1]).size, sumposy/(self.poslist[:,2]).size])
+...                 sumposx += self.poslist[ii, 3] * self.poslist[ii, 1]
+...                 sumposy += self.poslist[ii, 3] * self.poslist[ii, 2]
+...                 summass += self.poslist[ii, 3]
+...             CM = np.asarray([sumposx / summass, sumposy / summass])
 ...             CMrvec = CM - [x, y] + 0.01
 ...             CMrvecsq = CMrvec**2
 ...             CMrsqsum = CMrvecsq[0] + CMrvecsq[1]
 ...             CMr = CMrsqsum**(0.5)
 ...             if (self.sizes[0]/CMr < 1) or (self.children==[]):
-...                 F1x += (self.G/(CMr**2)) * CMrvec[0]
-...                 F1y += (self.G/(CMr**2)) * CMrvec[1]
+...                 F1x += (self.G * m * summass /(CMr**2)) * CMrvec[0]
+...                 F1y += (self.G * m * summass /(CMr**2)) * CMrvec[1]
 ...             else:
 ...                 for jj in range(len(self.children)):
 ...                     self.children[jj].CalcF(particle)
@@ -168,16 +172,18 @@
 
 ```python
 >>> # Variables
-... N = 128 # Number of particles
+... N = 512 # Number of particles
 >>> L = 10
 >>> dt = 0.004
 >>> # Generate random positions
 ... ids = np.linspace(1, N, N)
 >>> randpos = np.random.uniform(0, L, (N, 2))
->>> poslist = np.zeros((N, 3))
+>>> mass = np.ones(N)
+>>> poslist = np.zeros((N, 4))
 >>> vellist = np.zeros((N, 3))
 >>> poslist[:, 0] = ids
->>> poslist[:, 1:] = randpos[:,0:]
+>>> poslist[:, 1:3] = randpos[:,0:]
+>>> poslist[:, 3] = mass
 >>> vellist[:, 0] = ids
 >>> vellist[:, 1:] = np.random.normal(0, np.sqrt(100), (N, 2))
 >>> G = 6.64e-11
@@ -188,11 +194,15 @@
 
 ```python
 >>> %%timeit
-... a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G)
+... a = QuadTree(poslist, vellist, 0, 0, L, L, L, dt, G, N)
 ... a.Simulate()
 ... plt.figure()
 ... plt.scatter(poslist[:, 1], poslist[:, 2])
 ... plt.show()
+```
+
+```python
+>>> sys.getrecursionlimit()
 ```
 
 ```python

@@ -57,10 +57,18 @@ The Cython extension is already loaded. To reload it, use:
 ...         cdef double q2[1][2]
 ...         cdef double q3[1][2]
 ...         cdef double q4[1][2]
+...         cdef double q5[1][2]
+...         cdef double q6[1][2]
+...         cdef double q7[1][2]
+...         cdef double q8[1][2]
 ...         cdef double q1vel[1][2]
 ...         cdef double q2vel[1][2]
 ...         cdef double q3vel[1][2]
 ...         cdef double q4vel[1][2]
+...         cdef double q5vel[1][2]
+...         cdef double q6vel[1][2]
+...         cdef double q7vel[1][2]
+...         cdef double q8vel[1][2]
 ...
 ...         cdef int qq1
 ...         if self.depth > 0:

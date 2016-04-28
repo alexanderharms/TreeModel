@@ -6,8 +6,6 @@
 >>> from matplotlib import animation
 >>> import mpl_toolkits.mplot3d.axes3d as p3
 >>> import sys
-The Cython extension is already loaded. To reload it, use:
-  %reload_ext Cython
 ```
 
 ```python
@@ -38,9 +36,9 @@ The Cython extension is already loaded. To reload it, use:
 ...         self.G = G
 ...
 ...         cdef double xmid, ymid, zmid
-...         cdef double Fx[2582]
-...         cdef double Fy[2582]
-...         cdef double Fz[2582]
+...         cdef double Fx[4]
+...         cdef double Fy[4]
+...         cdef double Fz[4]
 ...         cdef double sizesx, sizesy, sizesz
 ...
 ...         self.sizesx = self.xmax - self.xmin
@@ -76,7 +74,7 @@ The Cython extension is already loaded. To reload it, use:
 ...         cdef int qq1
 ...         if self.depth > 0:
 ...             for qq1 in range(len(self.poslist)):
-...                 if (self.poslist[qq1][0] < self.xmid) & (self.poslist[qq1][1] > self.ymid) & (self.poslist[qq1][2] < self.zmid):
+...                 if (self.poslist[qq1][0] <= self.xmid) & (self.poslist[qq1][1] > self.ymid) & (self.poslist[qq1][2] <= self.zmid):
 ...                     if qq1 == 0:
 ...                         q1[qq1][0] = self.poslist[qq1][0]
 ...                         q1[qq1][1] = self.poslist[qq1][1]
@@ -87,7 +85,7 @@ The Cython extension is already loaded. To reload it, use:
 ...                     else:
 ...                         q1.append([self.poslist[qq1][0], self.poslist[qq1][1], self.poslist[qq1][2]])
 ...                         q1vel.append([self.vellist[qq1][0], self.vellist[qq1][1], self.vellist[qq1][2]])
-...                 elif (self.poslist[qq1][0] > self.xmid) & (self.poslist[qq1][1] > self.ymid) & (self.poslist[qq1][2] < self.zmid):
+...                 elif (self.poslist[qq1][0] > self.xmid) & (self.poslist[qq1][1] > self.ymid) & (self.poslist[qq1][2] <= self.zmid):
 ...                     if qq1 == 0:
 ...                         q2[qq1][0] = self.poslist[qq1][0]
 ...                         q2[qq1][1] = self.poslist[qq1][1]
@@ -98,7 +96,7 @@ The Cython extension is already loaded. To reload it, use:
 ...                     else:
 ...                         q2.append([self.poslist[qq1][0], self.poslist[qq1][1], self.poslist[qq1][2]])
 ...                         q2vel.append([self.vellist[qq1][0], self.vellist[qq1][1], self.vellist[qq1][2]])
-...                 elif (self.poslist[qq1][0] < self.xmid) & (self.poslist[qq1][1] < self.ymid) & (self.poslist[qq1][2] < self.zmid):
+...                 elif (self.poslist[qq1][0] <= self.xmid) & (self.poslist[qq1][1] <= self.ymid) & (self.poslist[qq1][2] <= self.zmid):
 ...                     if qq1 == 0:
 ...                         q3[qq1][0] = self.poslist[qq1][0]
 ...                         q3[qq1][1] = self.poslist[qq1][1]
@@ -109,7 +107,7 @@ The Cython extension is already loaded. To reload it, use:
 ...                     else:
 ...                         q3.append([self.poslist[qq1][0], self.poslist[qq1][1], self.poslist[qq1][2]])
 ...                         q3vel.append([self.vellist[qq1][0], self.vellist[qq1][1], self.vellist[qq1][2]])
-...                 elif (self.poslist[qq1][0] > self.xmid) & (self.poslist[qq1][1] < self.ymid) & (self.poslist[qq1][2] < self.zmid):
+...                 elif (self.poslist[qq1][0] > self.xmid) & (self.poslist[qq1][1] <= self.ymid) & (self.poslist[qq1][2] <= self.zmid):
 ...                     if qq1 == 0:
 ...                         q4[qq1][0] = self.poslist[qq1][0]
 ...                         q4[qq1][1] = self.poslist[qq1][1]
@@ -120,7 +118,7 @@ The Cython extension is already loaded. To reload it, use:
 ...                     else:
 ...                         q4.append([self.poslist[qq1][0], self.poslist[qq1][1], self.poslist[qq1][2]])
 ...                         q4vel.append([self.vellist[qq1][0], self.vellist[qq1][1], self.vellist[qq1][2]])
-...                 elif (self.poslist[qq1][0] < self.xmid) & (self.poslist[qq1][1] > self.ymid) & (self.poslist[qq1][2] > self.zmid):
+...                 elif (self.poslist[qq1][0] <= self.xmid) & (self.poslist[qq1][1] > self.ymid) & (self.poslist[qq1][2] > self.zmid):
 ...                     if qq1 == 0:
 ...                         q5[qq1][0] = self.poslist[qq1][0]
 ...                         q5[qq1][1] = self.poslist[qq1][1]
@@ -142,7 +140,7 @@ The Cython extension is already loaded. To reload it, use:
 ...                     else:
 ...                         q6.append([self.poslist[qq1][0], self.poslist[qq1][1], self.poslist[qq1][2]])
 ...                         q6vel.append([self.vellist[qq1][0], self.vellist[qq1][1], self.vellist[qq1][2]])
-...                 elif (self.poslist[qq1][0] < self.xmid) & (self.poslist[qq1][1] < self.ymid) & (self.poslist[qq1][2] > self.zmid):
+...                 elif (self.poslist[qq1][0] <= self.xmid) & (self.poslist[qq1][1] <= self.ymid) & (self.poslist[qq1][2] > self.zmid):
 ...                     if qq1 == 0:
 ...                         q7[qq1][0] = self.poslist[qq1][0]
 ...                         q7[qq1][1] = self.poslist[qq1][1]
@@ -153,7 +151,7 @@ The Cython extension is already loaded. To reload it, use:
 ...                     else:
 ...                         q7.append([self.poslist[qq1][0], self.poslist[qq1][1], self.poslist[qq1][2]])
 ...                         q7vel.append([self.vellist[qq1][0], self.vellist[qq1][1], self.vellist[qq1][2]])
-...                 elif (self.poslist[qq1][0] > self.xmid) & (self.poslist[qq1][1] < self.ymid) & (self.poslist[qq1][2] > self.zmid):
+...                 elif (self.poslist[qq1][0] > self.xmid) & (self.poslist[qq1][1] <= self.ymid) & (self.poslist[qq1][2] > self.zmid):
 ...                     if qq1 == 0:
 ...                         q8[qq1][0] = self.poslist[qq1][0]
 ...                         q8[qq1][1] = self.poslist[qq1][1]
@@ -240,9 +238,9 @@ The Cython extension is already loaded. To reload it, use:
 ...
 ...
 ...     def CalcTF(self):
-...         cdef double Fx[2582]
-...         cdef double Fy[2582]
-...         cdef double Fz[2582]
+...         cdef double Fx[4]
+...         cdef double Fy[4]
+...         cdef double Fz[4]
 ...         cdef int j, jj
 ...         for jj in range(len(Fx)):
 ...             Fx[jj] = 0
@@ -269,9 +267,9 @@ The Cython extension is already loaded. To reload it, use:
 ...             self.poslist[k][0] += self.vellist[k][0] * self.dt
 ...             self.poslist[k][1] += self.vellist[k][1] * self.dt
 ...             self.poslist[k][2] += self.vellist[k][2] * self.dt
-...             self.poslist[k][0] = self.poslist[k][0] % 2*1e8
-...             self.poslist[k][1] = self.poslist[k][1] % 2*1e8
-...             self.poslist[k][2] = self.poslist[k][2] % 2*1e8
+...             self.poslist[k][0] = self.poslist[k][0] % 20
+...             self.poslist[k][1] = self.poslist[k][1] % 20
+...             self.poslist[k][2] = self.poslist[k][2] % 20
 ...
 ...
 ...         self.Fx, self.Fy, self.Fz = self.CalcTF()
@@ -294,70 +292,70 @@ The Cython extension is already loaded. To reload it, use:
 ... ### REMEMBER ###
 ... # Change the list sizes for F in init and CalcTF when changing N,
 ... # and recompile.
-... N = 2582 # Number of particles
 ...
->>> sys.setrecursionlimit(2*N)
->>> L = 1e8 # [AU]
+... L = 20 # [AU]
 >>> dt = 0.1 # [years]
->>> G = 6.67e-11
->>> # Generate random positions
-... data = np.genfromtxt('cluster2582.txt', skip_header=2)
->>> print(np.amax(data[:,0]))
+>>> G = 1
 ...
->>> print(data.shape)
->>> #randpos = np.random.uniform(0, L, (N, 2))
-... #randr = np.random.uniform(-L/20, L/20, N)
-... # Pr = np.random.uniform(0, 1, N)
-... # r = a * np.sqrt(Pr) / (np.sqrt(Pr) - 1)
-... # mass = M / (2 * np.pi) * (a/r) * (1 / (r + a ) ** 3)
-... #mass = (Mh * r**2) / (r + a)**2
-... # Erand = np.random.uniform(-2, 0, N)
-... # fErand = np.random.uniform(0, 0.3, N)
+>>> r = np.linspace(5,5,1)
+>>> c = 1
+>>> Nr = [np.floor(c*r)]
+>>> theta = np.pi/2
+>>> phi1 = 2*np.pi*(1-1/Nr[0])
+>>> phi = np.linspace(0, phi1 , Nr[0])
+>>> print(phi)
+>>> print(0, 2*np.pi/3, 4*np.pi/3)
+>>> poslist = np.zeros((len(phi), 4))
+>>> vellist = np.zeros((len(phi), 3))
+>>> for j in range(len(phi)):
+...     poslist[j, 0] = r[0] * np.sin(theta) * np.cos(phi[j])
+...     poslist[j, 1] = r[0] * np.sin(theta) * np.sin(phi[j])
+...     poslist[j, 2] = r[0] * np.cos(theta)
+...     poslist[j, 3] = 1
+>>> mass = np.sum(poslist[:,3])
+>>> print(mass)
+>>> vmag = np.sqrt(G*mass/r[0])
+>>> for k in range(len(phi)):
+...     vellist[k, 0] = -vmag * np.sin(phi[k])
+...     vellist[k, 1] = vmag * np.cos(phi[k])
+...     vellist[k, 2] = 0
 ...
-... # def hernquist(Erand):
-... #     q = np.sqrt(- a * Erand / (G * M))
-... #     fE = (np.sqrt(M)/(8*np.pi**3 * a ** (5/2) * np.sqrt(2*G)))  \
-... #     * (1/(1-q**2)**(5/2)) * (3*np.arcsin(q) + (q * (1 - q**2)**(1/2)) * (1 - 2*q**2) \
-... #     * (8 * q**4 - 8 * q**2 - 3))
-... #     return fE
+>>> for i in range(1,len(Nr)):
+...     phi1 = 2*np.pi*(1-1/Nr[i])
+...     phi = np.linspace(0, phi1, Nr[i])
+...     phi = np.delete(phi, -1)
+...     for jj in range(len(phi)):
+...         poslist2 = np.zeros(4)
+...         poslist2[0] = r[i] * np.sin(theta) * np.cos(phi[jj])
+...         poslist2[1] = r[i] * np.sin(theta) * np.sin(phi[jj])
+...         poslist2[2] = r[i] * np.cos(theta)
+...         poslist2[3] = 1
+...         poslist = np.vstack((poslist, poslist2))
+...     mass = np.sum(poslist[:,3])
+...     vmag = np.sqrt(G*mass/r[0])
+...     for kk in range(len(phi)):
+...         vellist2 = np.zeros(3)
+...         vellist2[0] = -vmag * np.sin(phi[kk])
+...         vellist2[1] = vmag * np.cos(phi[kk])
+...         vellist2[2] = 0
+...         vellist = np.vstack((vellist, vellist2))
 ...
-... # def potential(r):
-... #     potential = G * M / (np.absolute(r) + a)
-... #     return potential
-...
-... # fE = hernquist(Erand)
-... # fEcheck = fE > fErand
-... # fEcheck.astype(int)
-... # E = Erand[np.nonzero(Erand * fEcheck)]
-... # sumfEcheck = sum(fEcheck)
-... # while sumfEcheck < N:
-... #     Erand2 = np.random.uniform(-2, 0, (N - sum(fEcheck)))
-... #     fErand2 = np.random.uniform(0, 0.3, (N - sum(fEcheck)))
-... #     fE2 = hernquist(Erand2)
-... #     fEcheck2 = fE2 > fErand2
-... #     fEcheck2.astype(int)
-... #     E2 = Erand2[np.nonzero(Erand2 * fEcheck2)]
-... #     E = np.append(E, E2)
-... #     sumfEcheck += sum(fEcheck2)
-...
-... # velmagsq = np.absolute(2*(E[0:N] - potential(r)))
-...
-... # randvelx = np.random.uniform(-np.sqrt(velmagsq), np.sqrt(velmagsq), N)
-... # randvely = np.random.uniform(-np.sqrt(np.absolute(velmagsq - randvelx**2)), \
-... #                             np.sqrt(np.absolute(velmagsq - randvelx**2)), N)
-... # randvelz = np.random.uniform(-np.sqrt(np.absolute(velmagsq - randvelx**2 - randvely**2)), \
-... #                             np.sqrt(np.absolute(velmagsq - randvelx**2 - randvely**2)))
-... # r = np.random.uniform(-L/2, L/2, N)
-... # randphi = np.random.uniform(0, 2*np.pi, N)
-... # randtheta = np.random.uniform(-np.pi, np.pi, N)
-... theta = [0, 2*np.pi/3, 4*np.pi/3]
->>> r = np.sqrt(0.5**2+1**2)*0.5
->>> v = np.sqrt(3)
->>> mass = np.ones(N) # [Solar mass]
->>> poslist = np.zeros((N, 4))
->>> vellist = np.zeros((N, 3))
->>> #poslist[:, 1:3] = randpos[:,0:]
-... # poslist[0, 0] = r
+>>> poslist[:,0:4] = poslist[:,0:4] + L/2
+>>> totalmass = np.sum(poslist[:,3])
+>>> N = np.int(np.sum(Nr)) # Number of particles
+>>> print(N)
+>>> #sys.setrecursionlimit(2*N)
+... ## Three particles rotating
+... # r = np.sqrt(2**2 + 4**2)*0.5
+... # theta = [0 , 2*np.pi/3, 4*np.pi/3]
+... # totalmass = 3
+... # poslist = np.zeros((4,4))
+... # vellist = np.zeros((4,3))
+... # totalmass = 4
+... # theta = [0, np.pi/2, np.pi, 3*np.pi/2]
+... # r = np.sqrt(2**2 + 2**2)
+... # v = np.sqrt(G*totalmass/r)
+... # poslist[0, 0] = r + L/2
 ... # poslist[0, 1] = L/2
 ... # poslist[0, 2] = L/2
 ... # poslist[0, 3] = 1
@@ -369,11 +367,10 @@ The Cython extension is already loaded. To reload it, use:
 ... # poslist[2, 1] = r*np.sin(theta[2]) + L/2
 ... # poslist[2, 2] = L/2
 ... # poslist[2, 3] = 1
-... # poslist = poslist +
-... #vellist[:, 1:] = np.random.normal(0, np.sqrt(100), (N, 2))#vellist[:, 1:] = np.random.normal(0, np.sqrt(10), (N, 2))
-... # vellist[:, 0] = randvelx
-... # vellist[:, 1] = randvely
-... # vellist[:, 2] = randvely
+... # poslist[3, 0] = r*np.cos(theta[3]) + L/2
+... # poslist[3, 1] = r*np.sin(theta[3]) + L/2
+... # poslist[3, 2] = L/2
+... # poslist[3, 3] = 1
 ... # vellist[0, 0] = 0
 ... # vellist[0, 1] = v
 ... # vellist[0, 2] = 0
@@ -383,15 +380,10 @@ The Cython extension is already loaded. To reload it, use:
 ... # vellist[2, 0] = v*-np.sin(theta[2])
 ... # vellist[2, 1] = v*np.cos(theta[2])
 ... # vellist[2, 2] = 0
+... # vellist[3, 0] = v*-np.sin(theta[3])
+... # vellist[3, 1] = v*np.cos(theta[3])
+... # vellist[3, 2] = 0
 ... # vellist[2, :] = [np.sin(np.pi/3), np.cos(np.pi/3), 0]
-... poslist[:, 0] = data[:, 0]
->>> poslist[:, 1] = data[:, 1]
->>> poslist[:, 2] = 0
->>> poslist[:, 3] = data[:, 3]
->>> vellist[:, 0] = data[:, 4]
->>> vellist[:, 1] = data[:, 5]
->>> vellist[:, 2] = 0
->>> #G = 3.9e67 # [AU]**2/([Solar mass] * [year]**2)
 ...
 ... fig = plt.figure()
 >>> ax = fig.add_subplot(111, projection='3d')
@@ -400,17 +392,24 @@ The Cython extension is already loaded. To reload it, use:
 >>> ax.set_xlabel('X Label')
 >>> ax.set_ylabel('Y Label')
 >>> ax.set_zlabel('Z Label')
->>> ax.set_zlim(-L, L)
->>> ax.set_xlim(-L, L)
->>> ax.set_ylim(-L, L)
+>>> ax.set_zlim(0, L)
+>>> ax.set_xlim(0, L)
+>>> ax.set_ylim(0, L)
 >>> plt.show()
-473352000.0
-(2582, 8)
+>>> print(poslist)
+[ 0.          1.57079633  3.14159265  4.71238898]
+0 2.0943951023931953 4.1887902047863905
+4.0
+4
+[[ 12.82842712  10.          10.           1.        ]
+ [ 10.          12.82842712  10.           1.        ]
+ [  7.17157288  10.          10.           1.        ]
+ [ 10.           7.17157288  10.           1.        ]]
 ```
 
 ```python
 >>> # Plotting code
-... aa = OctoTree(poslist.tolist(), vellist.tolist(), -L, -L, -L, L, L, L, 2*L, dt, G, 2*N)
+... aa = OctoTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, 2*N)
 ...
 >>> fig = plt.figure()
 >>> ax = p3.Axes3D(fig)
@@ -422,7 +421,7 @@ The Cython extension is already loaded. To reload it, use:
 ...
 >>> def animate(i):
 ...     pposlist = aa.MoveParticles()
-...     for iii in range(len(poslist)):
+...     for iii in range(len(pposlist)):
 ...         xx[iii] = pposlist[iii][0]
 ...         yy[iii] = pposlist[iii][1]
 ...         zz[iii] = pposlist[iii][2]
@@ -443,16 +442,89 @@ The Cython extension is already loaded. To reload it, use:
 >>> ani = animation.FuncAnimation(fig, animate, frames=1000, repeat=False)
 >>> #save_anim(ani, 'Test')
 ... plt.show()
+10.118920711500271
+10.237636339587048
+10.355942234026292
+10.473634609413924
+10.59051097377904
+10.706370552642479
+10.821014707064736
+10.934247344258214
+11.045875319389413
+11.155708827255884
+11.263561782590259
+11.36925218781851
+11.472602487180998
+11.573439906211997
+11.671596775665295
+11.76691083906918
+11.859225543192778
+11.94839031080618
+12.034260795218337
+12.116699116178175
+12.195574076825075
+12.270761361473816
+12.342143714115569
+12.409611097609757
+12.473060833631067
+12.532397723520758
+12.587534150271466
+12.638390161949317
+12.684893536926012
+12.726979831356504
+12.7645924093946
+12.797682456689259
+12.826208977748479
+12.850138777795477
+12.86944642977344
+12.88411422718062
+12.894132123437174
+12.899497658499042
+12.900215873442743
+12.896299213748385
+12.887767422006856
+12.874647420771407
+12.856973186263982
+12.834785613633118
+12.808132374443305
+12.777067767055827
+12.741652560538613
+12.701953832717832
+12.658044802957297
+12.610004660223435
+12.55791838696403
+12.501876579298388
+12.44197526398531
+12.378315712603566
+12.311004253347686
+12.240152080809946
+12.165875064087826
+12.088293553524945
+12.007532186362772
+11.923719691550492
+11.83698869393128
+11.747475517995074
+11.655319991360892
+11.560665248125822
+11.463657532193086
+11.364446000668224
+11.263182527390386
+11.160021506645048
+11.055119657085262
+10.948635825870767
+10.840730793018011
+10.73156707593935
+10.621308734136417
 ```
 
 ```python
 >>> nt = 10
->>> aa = OctoTree(poslist.tolist(), vellist.tolist(), -L, -L, -L, L, L, L, 2*L, dt, G, N)
+>>> aa = OctoTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N)
 >>> aa.Simulate(nt)
 >>> xx = np.zeros(N)
 >>> yy = np.zeros(N)
 >>> zz = np.zeros(N)
->>> for iii in range(len(poslist)):
+>>> for iii in range(len(aa.poslist)):
 ...     xx[iii] = aa.poslist[iii][0]
 ...     yy[iii] = aa.poslist[iii][1]
 ...     zz[iii] = aa.poslist[iii][2]
@@ -463,9 +535,9 @@ The Cython extension is already loaded. To reload it, use:
 >>> ax.set_xlabel('X Label')
 >>> ax.set_ylabel('Y Label')
 >>> ax.set_zlabel('Z Label')
->>> ax.set_zlim(-L, L)
->>> ax.set_xlim(-L, L)
->>> ax.set_ylim(-L, L)
+>>> ax.set_zlim(0, L)
+>>> ax.set_xlim(0, L)
+>>> ax.set_ylim(0, L)
 >>> plt.show()
 ```
 

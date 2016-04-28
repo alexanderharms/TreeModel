@@ -1,10 +1,10 @@
 ```python
->>> %matplotlib inline
->>> %load_ext Cython
+>>> #%matplotlib inline
+... %load_ext Cython
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
 >>> from matplotlib import animation
->>> from mpl_toolkits.mplot3d import Axes3D
+>>> import mpl_toolkits.mplot3d.axes3d as p3
 >>> import sys
 ```
 
@@ -320,7 +320,7 @@
 ...
 >>> fig = plt.figure()
 >>> ax = fig.add_subplot(111, projection='3d')
->>> ax.scatter(poslist[:,0], poslist[:,1], poslist[:,2], c='r', marker='o')
+>>> ax.scatter(poslist[:,0], poslist[:,1], poslist[:,2], c='r', marker='o', s=poslist[:,3])
 ...
 >>> ax.set_xlabel('X Label')
 >>> ax.set_ylabel('Y Label')
@@ -344,7 +344,7 @@
 ...     zz[iii] = a.poslist[iii][2]
 >>> fig = plt.figure()
 >>> ax = fig.add_subplot(111, projection='3d')
->>> ax.scatter(xx, yy, zz, c='r', marker='o')
+>>> ax.scatter(xx, yy, zz, c='r', marker='o', s=poslist[:,3])
 ...
 >>> ax.set_xlabel('X Label')
 >>> ax.set_ylabel('Y Label')
@@ -357,15 +357,20 @@
 
 ```python
 >>> # Plotting code
-... a = QuadTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N)
+... a = OctoTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N)
 ...
 >>> fig = plt.figure()
->>> ax = fig.add_subplot(111, aspect='equal', autoscale_on=False, xlim=(0, L), ylim=(0, L))
->>> particles, = ax.plot([], [], 'bo', ms=6)
+>>> ax = p3.Axes3D(fig)
+>>> particles, = ax.plot(poslist[:,0], poslist[:,1], poslist[:,2], 'bo', ms=6)
 ...
 >>> def animate(i):
-...     x, y, m = a.MoveParticles().T
-...     particles.set_data(x, y)
+...     pposlist = a.MoveParticles()
+...     for iii in range(len(poslist)):
+...         xx[iii] = pposlist[iii][0]
+...         yy[iii] = pposlist[iii][1]
+...         zz[iii] = pposlist[iii][2]
+...     particles.set_data(xx, yy)
+...     particles.set_3d_properties(zz)
 ...     return particles
 ...
 >>> def save_anim(file, title):
@@ -374,9 +379,13 @@
 ...     writer = Writer(fps=25, metadata=dict(artist='Me'), bitrate=1800)
 ...     file.save(title + '.mp4', writer=writer)
 ...
->>> ani = animation.FuncAnimation(fig, animate, frames=10, repeat=False)
->>> save_anim(ani, 'Test')
->>> plt.show()
+...
+>>> ax.set_xlim3d([0, L])
+>>> ax.set_ylim3d([0, L])
+>>> ax.set_zlim3d([0, L])
+>>> ani = animation.FuncAnimation(fig, animate, frames=1000, repeat=False)
+>>> #save_anim(ani, 'Test')
+... plt.show()
 ```
 
 ```python
@@ -384,10 +393,14 @@
 >>> print(a)
 >>> print(len(a))
 >>> a[1][1]
+[[1, 2, 2], [3, 4, 2]]
+2
+4
 ```
 
 ```python
 >>> len(poslist.tolist())
+256
 ```
 
 ```python

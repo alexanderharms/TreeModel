@@ -6,8 +6,6 @@
 >>> from matplotlib import animation
 >>> import mpl_toolkits.mplot3d.axes3d as p3
 >>> import sys
-The Cython extension is already loaded. To reload it, use:
-  %reload_ext Cython
 ```
 
 ```python
@@ -19,7 +17,7 @@ The Cython extension is already loaded. To reload it, use:
 ...
 ... cdef class OctoTree:
 ...     cdef public poslist, vellist, depth, xmin, xmax, ymin, ymax, zmin, zmax, L, dt, G
-...     cdef public sizesx, sizesy, sizesz, children, xmid, ymid, zmid, F
+...     cdef public sizesx, sizesy, sizesz, children, xmid, ymid, zmid, Fx, Fy, Fz
 ...     def __init__(self, list poslist, list vellist, \
 ...                  double xmin, double ymin, double zmin, double xmax, double ymax, double zmax, \
 ...                  double L, double dt, double G, int depth):
@@ -38,7 +36,9 @@ The Cython extension is already loaded. To reload it, use:
 ...         self.G = G
 ...
 ...         cdef double xmid, ymid, zmid
-...         cdef double F[256][2]
+...         cdef double Fx[256]
+...         cdef double Fy[256]
+...         cdef double Fz[256]
 ...         cdef double sizesx, sizesy, sizesz
 ...
 ...         self.sizesx = self.xmax - self.xmin
@@ -50,26 +50,26 @@ The Cython extension is already loaded. To reload it, use:
 ...         self.zmid = (self.zmin + self.zmax)/2
 ...
 ...         self.CreateTree()
-...         self.F = self.CalcTF()
+...         self.Fx, self.Fy, self.Fz = self.CalcTF()
 ...
 ...     def CreateTree(self):
 ...
-...         cdef double q1[1][2]
-...         cdef double q2[1][2]
-...         cdef double q3[1][2]
-...         cdef double q4[1][2]
-...         cdef double q5[1][2]
-...         cdef double q6[1][2]
-...         cdef double q7[1][2]
-...         cdef double q8[1][2]
-...         cdef double q1vel[1][2]
-...         cdef double q2vel[1][2]
-...         cdef double q3vel[1][2]
-...         cdef double q4vel[1][2]
-...         cdef double q5vel[1][2]
-...         cdef double q6vel[1][2]
-...         cdef double q7vel[1][2]
-...         cdef double q8vel[1][2]
+...         cdef double q1[1][3]
+...         cdef double q2[1][3]
+...         cdef double q3[1][3]
+...         cdef double q4[1][3]
+...         cdef double q5[1][3]
+...         cdef double q6[1][3]
+...         cdef double q7[1][3]
+...         cdef double q8[1][3]
+...         cdef double q1vel[1][3]
+...         cdef double q2vel[1][3]
+...         cdef double q3vel[1][3]
+...         cdef double q4vel[1][3]
+...         cdef double q5vel[1][3]
+...         cdef double q6vel[1][3]
+...         cdef double q7vel[1][3]
+...         cdef double q8vel[1][3]
 ...
 ...         cdef int qq1
 ...         if self.depth > 0:
@@ -164,38 +164,38 @@ The Cython extension is already loaded. To reload it, use:
 ...                         q8vel.append([self.vellist[qq1][0], self.vellist[qq1][1], self.vellist[qq1][2]])
 ...
 ...         if len(q1) > 1:
-...             self.children.append(OctoTree(q1, q1vel, self.xmin, self.ymid, self.zmin, self.xmid, self.ymax, self.zmid, self.L, self.dt, \
+...             self.children.append(OctoTree(q1, q1vel, self.xmin, self.ymid, self.zmin, self.xmid, self.ymax, self.zmid, self.L/2, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...         if len(q2) > 1:
-...             self.children.append(OctoTree(q2, q2vel, self.xmid, self.ymid, self.zmin, self.xmax, self.ymax, self.zmid, self.L, self.dt, \
+...             self.children.append(OctoTree(q2, q2vel, self.xmid, self.ymid, self.zmin, self.xmax, self.ymax, self.zmid, self.L/2, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...         if len(q3) > 1:
-...             self.children.append(OctoTree(q3, q3vel, self.xmin, self.ymin, self.zmin, self.xmid, self.ymid, self.zmid, self.L, self.dt, \
+...             self.children.append(OctoTree(q3, q3vel, self.xmin, self.ymin, self.zmin, self.xmid, self.ymid, self.zmid, self.L/2, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...         if len(q4) > 1:
-...             self.children.append(OctoTree(q4, q4vel, self.xmid, self.ymin, self.zmin, self.xmax, self.ymid, self.zmid, self.L, self.dt, \
+...             self.children.append(OctoTree(q4, q4vel, self.xmid, self.ymin, self.zmin, self.xmax, self.ymid, self.zmid, self.L/2, self.dt, \
 ...                                               self.G, self.depth-1))
 ...         if len(q5) > 1:
-...             self.children.append(OctoTree(q5, q5vel, self.xmin, self.ymid, self.zmid, self.xmid, self.ymax, self.zmax, self.L, self.dt, \
+...             self.children.append(OctoTree(q5, q5vel, self.xmin, self.ymid, self.zmid, self.xmid, self.ymax, self.zmax, self.L/2, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...         if len(q6) > 1:
-...             self.children.append(OctoTree(q6, q6vel, self.xmid, self.ymid, self.zmid, self.xmax, self.ymax, self.zmax, self.L, self.dt, \
+...             self.children.append(OctoTree(q6, q6vel, self.xmid, self.ymid, self.zmid, self.xmax, self.ymax, self.zmax, self.L/2, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...         if len(q7) > 1:
-...             self.children.append(OctoTree(q7, q7vel, self.xmin, self.ymin, self.zmid, self.xmid, self.ymid, self.zmax, self.L, self.dt, \
+...             self.children.append(OctoTree(q7, q7vel, self.xmin, self.ymin, self.zmid, self.xmid, self.ymid, self.zmax, self.L/2, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...         if len(q8) > 1:
-...             self.children.append(OctoTree(q8, q8vel, self.xmid, self.ymin, self.zmid, self.xmax, self.ymid, self.zmax, self.L, self.dt, \
+...             self.children.append(OctoTree(q8, q8vel, self.xmid, self.ymin, self.zmid, self.xmax, self.ymid, self.zmax, self.L/2, self.dt, \
 ...                                               self.G, self.depth-1))
 ...
 ...     def CalcF(self, list particle):
-...         cdef int ii, jj, ll
+...         cdef int ii, jj
 ...         cdef double CMr, F1x, F1y, F1z, sumposx, sumposy
 ...         cdef double sumposz
 ...         cdef double x
@@ -207,10 +207,11 @@ The Cython extension is already loaded. To reload it, use:
 ...         cdef double CMrsq
 ...         global F1x, F1y, F1z
 ...
-...         if self.sizesx == self.L:
+...         if self.sizesx == 10000:
 ...             F1x = 0
 ...             F1y = 0
 ...             F1z = 0
+...
 ...         if len(self.poslist) != 0:
 ...             x = particle[0]
 ...             y = particle[1]
@@ -231,10 +232,10 @@ The Cython extension is already loaded. To reload it, use:
 ...             CMrvec[2] = CM[2] - z + 0.01
 ...             CMrsq = CMrvec[0] * CMrvec[0] + CMrvec[1] * CMrvec[1] + CMrvec[2] * CMrvec[2]
 ...             CMr = CMrsq**(0.5)
-...             if (self.sizesx /CMr < 1) or (self.children==[]):
-...                 F1x += - (self.G * m * summass /(CMr*CMrsq)) * CMrvec[0]
-...                 F1y += - (self.G * m * summass /(CMr*CMrsq)) * CMrvec[1]
-...                 F1z += - (self.G * m * summass /(CMr*CMrsq)) * CMrvec[2]
+...             if (self.sizesx / CMr < 0.5) or (self.children==[]):
+...                 F1x += (self.G * m * summass /(CMrsq)) * (CMrvec[0]/CMr)
+...                 F1y += (self.G * m * summass /(CMrsq)) * (CMrvec[1]/CMr)
+...                 F1z += (self.G * m * summass /(CMrsq)) * (CMrvec[2]/CMr)
 ...             else:
 ...                 for jj in range(len(self.children)):
 ...                     self.children[jj].CalcF(particle)
@@ -242,37 +243,41 @@ The Cython extension is already loaded. To reload it, use:
 ...
 ...
 ...     def CalcTF(self):
-...         cdef double F[256][3]
+...         cdef double Fx[256]
+...         cdef double Fy[256]
+...         cdef double Fz[256]
 ...         cdef int j
 ...
 ...         for j in range(len(self.poslist)):
-...             F[j] = self.CalcF(self.poslist[j])
-...         self.F = F
-...         return F
+...             Fx[j], Fy[j], Fz[j] = self.CalcF(self.poslist[j])
+...         self.Fx = Fx
+...         self.Fy = Fy
+...         self.Fz = Fz
+...         return Fx, Fy, Fz
 ...
 ...     def MoveParticles(self):
 ...         cdef int k, k2
 ...
 ...         for k in range(len(self.poslist)):
 ...             # Calculate velocity, 1st step
-...             self.vellist[k][0] += 0.5 * self.F[k][0] * self.dt
-...             self.vellist[k][1] += 0.5 * self.F[k][1] * self.dt
-...             self.vellist[k][2] += 0.5 * self.F[k][2] * self.dt
+...             self.vellist[k][0] += 0.5 * self.Fx[k] * self.dt
+...             self.vellist[k][1] += 0.5 * self.Fy[k] * self.dt
+...             self.vellist[k][2] += 0.5 * self.Fz[k] * self.dt
 ...             # Calculate new positions
 ...             self.poslist[k][0] += self.vellist[k][0] * self.dt
 ...             self.poslist[k][1] += self.vellist[k][1] * self.dt
 ...             self.poslist[k][2] += self.vellist[k][2] * self.dt
-...             self.poslist[k][0] = self.poslist[k][0] % self.L
-...             self.poslist[k][1] = self.poslist[k][1] % self.L
-...             self.poslist[k][2] = self.poslist[k][2] % self.L
+...             self.poslist[k][0] = self.poslist[k][0] % 10000
+...             self.poslist[k][1] = self.poslist[k][1] % 10000
+...             self.poslist[k][2] = self.poslist[k][2] % 10000
 ...
 ...
-...         self.F = self.CalcTF()
+...         self.Fx, self.Fy, self.Fz = self.CalcTF()
 ...         for k2 in range(len(self.poslist)):
 ...             # Calculate velocity, 2nd step
-...             self.vellist[k2][0] += 0.5 * self.F[k2][0] * self.dt
-...             self.vellist[k2][1] += 0.5 * self.F[k2][1] * self.dt
-...             self.vellist[k2][2] += 0.5 * self.F[k2][2] * self.dt
+...             self.vellist[k2][0] += 0.5 * self.Fx[k2] * self.dt
+...             self.vellist[k2][1] += 0.5 * self.Fy[k2] * self.dt
+...             self.vellist[k2][2] += 0.5 * self.Fz[k2] * self.dt
 ...         self.CreateTree
 ...         return self.poslist
 ...
@@ -285,27 +290,71 @@ The Cython extension is already loaded. To reload it, use:
 ```python
 >>> # Variables
 ... ### REMEMBER ###
-... # Change the lists izes for F in init and CalcTF when changing N,
+... # Change the list sizes for F in init and CalcTF when changing N,
 ... # and recompile.
 ... N = 256 # Number of particles
 ...
 >>> sys.setrecursionlimit(N)
 >>> L = 10000 # [AU]
 >>> dt = 1 # [years]
+>>> a = 0.5
+>>> G = 1
+>>> M = N
 >>> # Generate random positions
-... ids = np.linspace(1, N, N)
->>> #randpos = np.random.uniform(0, L, (N, 2))
-... randr = np.random.uniform(-L/20, L/20, N)
+...
+... #randpos = np.random.uniform(0, L, (N, 2))
+... #randr = np.random.uniform(-L/20, L/20, N)
+... # Pr = np.random.uniform(0, 1, N)
+... # r = a * np.sqrt(Pr) / (np.sqrt(Pr) - 1)
+... # mass = M / (2 * np.pi) * (a/r) * (1 / (r + a ) ** 3)
+... #mass = (Mh * r**2) / (r + a)**2
+... # Erand = np.random.uniform(-2, 0, N)
+... # fErand = np.random.uniform(0, 0.3, N)
+...
+... # def hernquist(Erand):
+... #     q = np.sqrt(- a * Erand / (G * M))
+... #     fE = (np.sqrt(M)/(8*np.pi**3 * a ** (5/2) * np.sqrt(2*G)))  \
+... #     * (1/(1-q**2)**(5/2)) * (3*np.arcsin(q) + (q * (1 - q**2)**(1/2)) * (1 - 2*q**2) \
+... #     * (8 * q**4 - 8 * q**2 - 3))
+... #     return fE
+...
+... # def potential(r):
+... #     potential = G * M / (np.absolute(r) + a)
+... #     return potential
+...
+... # fE = hernquist(Erand)
+... # fEcheck = fE > fErand
+... # fEcheck.astype(int)
+... # E = Erand[np.nonzero(Erand * fEcheck)]
+... # sumfEcheck = sum(fEcheck)
+... # while sumfEcheck < N:
+... #     Erand2 = np.random.uniform(-2, 0, (N - sum(fEcheck)))
+... #     fErand2 = np.random.uniform(0, 0.3, (N - sum(fEcheck)))
+... #     fE2 = hernquist(Erand2)
+... #     fEcheck2 = fE2 > fErand2
+... #     fEcheck2.astype(int)
+... #     E2 = Erand2[np.nonzero(Erand2 * fEcheck2)]
+... #     E = np.append(E, E2)
+... #     sumfEcheck += sum(fEcheck2)
+...
+... # velmagsq = np.absolute(2*(E[0:N] - potential(r)))
+...
+... # randvelx = np.random.uniform(-np.sqrt(velmagsq), np.sqrt(velmagsq), N)
+... # randvely = np.random.uniform(-np.sqrt(np.absolute(velmagsq - randvelx**2)), \
+... #                             np.sqrt(np.absolute(velmagsq - randvelx**2)), N)
+... # randvelz = np.random.uniform(-np.sqrt(np.absolute(velmagsq - randvelx**2 - randvely**2)), \
+... #                             np.sqrt(np.absolute(velmagsq - randvelx**2 - randvely**2)))
+... r = np.random.uniform(-L/10, L/10, N)
 >>> randphi = np.random.uniform(0, 2*np.pi, N)
 >>> randtheta = np.random.uniform(-np.pi, np.pi, N)
->>> randx = randr * np.cos(randphi) * np.sin(randtheta) + L/2
->>> randy = randr * np.sin(randphi) * np.sin(randtheta) + L/2
->>> randz = randr * np.cos(randtheta) + L/2
->>> randveltheta = np.random.normal(0, np.sqrt(100), N)
+>>> randx = r * np.cos(randphi) * np.sin(randtheta) + L/2
+>>> randy = r * np.sin(randphi) * np.sin(randtheta) + L/2
+>>> randz = r * np.cos(randtheta) + L/2
+>>> randveltheta = np.random.normal(0, np.sqrt(10), N)
 >>> randvelx = - randveltheta * np.sin(randtheta)
 >>> randvely = randveltheta * np.cos(randtheta)
 ...
->>> mass = np.ones(N) # [Solar mass]
+>>> mass = np.ones(N)*100 # [Solar mass]
 >>> poslist = np.zeros((N, 4))
 >>> vellist = np.zeros((N, 3))
 >>> #poslist[:, 1:3] = randpos[:,0:]
@@ -313,15 +362,14 @@ The Cython extension is already loaded. To reload it, use:
 >>> poslist[:, 1] = randy
 >>> poslist[:, 2] = randz
 >>> poslist[:, 3] = mass
-...
 >>> #vellist[:, 1:] = np.random.normal(0, np.sqrt(100), (N, 2))#vellist[:, 1:] = np.random.normal(0, np.sqrt(10), (N, 2))
-... vellist[:, 0] = randvelx
->>> vellist[:, 1] = randvely
+... # vellist[:, 0] = randvelx
+... # vellist[:, 1] = randvely
+... # vellist[:, 2] = randvely
 ...
->>> #G = 3.9e67 # [AU]**2/([Solar mass] * [year]**2)
-... G = 1
+... #G = 3.9e67 # [AU]**2/([Solar mass] * [year]**2)
 ...
->>> fig = plt.figure()
+... fig = plt.figure()
 >>> ax = fig.add_subplot(111, projection='3d')
 >>> ax.scatter(poslist[:,0], poslist[:,1], poslist[:,2], c='r', marker='o', s=poslist[:,3])
 ...
@@ -335,11 +383,13 @@ The Cython extension is already loaded. To reload it, use:
 ```
 
 ```python
->>> %%timeit
-... nt = 100
-... a = OctoTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N)
-... a.Simulate(nt)
-1 loop, best of 3: 1.87 s per loop
+>>> print(poslist.tolist()[0])
+```
+
+```python
+>>> nt = 100
+>>> a = OctoTree(poslist.tolist(), vellist.tolist(), -L/2, -L/2, -L/2, L/2, L/2, L/2, L, dt, G, N)
+>>> a.Simulate(nt)
 ```
 
 ```python
@@ -357,22 +407,26 @@ The Cython extension is already loaded. To reload it, use:
 >>> ax.set_xlabel('X Label')
 >>> ax.set_ylabel('Y Label')
 >>> ax.set_zlabel('Z Label')
->>> ax.set_zlim(0, L)
->>> ax.set_xlim(0, L)
->>> ax.set_ylim(0, L)
+>>> ax.set_zlim(-L/2, L/2)
+>>> ax.set_xlim(-L/2, L/2)
+>>> ax.set_ylim(-L/2, L/2)
 >>> plt.show()
 ```
 
 ```python
 >>> # Plotting code
-... a = OctoTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N)
+... aa = OctoTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N)
 ...
 >>> fig = plt.figure()
 >>> ax = p3.Axes3D(fig)
 >>> particles, = ax.plot(poslist[:,0], poslist[:,1], poslist[:,2], 'bo', ms=6)
 ...
+>>> xx = np.zeros(N)
+>>> yy = np.zeros(N)
+>>> zz = np.zeros(N)
+...
 >>> def animate(i):
-...     pposlist = a.MoveParticles()
+...     pposlist = aa.MoveParticles()
 ...     for iii in range(len(poslist)):
 ...         xx[iii] = pposlist[iii][0]
 ...         yy[iii] = pposlist[iii][1]
@@ -419,6 +473,11 @@ The Cython extension is already loaded. To reload it, use:
 >>> m = [1.0]
 >>> m.append(2)
 >>> print(m)
+```
+
+```python
+>>> a = OctoTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N)
+>>> print(a.children)
 ```
 
 ```python

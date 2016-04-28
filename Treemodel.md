@@ -6,8 +6,6 @@
 >>> from matplotlib import animation
 >>> import mpl_toolkits.mplot3d.axes3d as p3
 >>> import sys
-The Cython extension is already loaded. To reload it, use:
-  %reload_ext Cython
 ```
 
 ```python
@@ -38,9 +36,9 @@ The Cython extension is already loaded. To reload it, use:
 ...         self.G = G
 ...
 ...         cdef double xmid, ymid, zmid
-...         cdef double Fx[640]
-...         cdef double Fy[640]
-...         cdef double Fz[640]
+...         cdef double Fx[135]
+...         cdef double Fy[135]
+...         cdef double Fz[135]
 ...         cdef double sizesx, sizesy, sizesz
 ...
 ...         self.sizesx = self.xmax - self.xmin
@@ -227,12 +225,12 @@ The Cython extension is already loaded. To reload it, use:
 ...             CMrvec[0] = CM[0] - x
 ...             CMrvec[1] = CM[1] - y
 ...             CMrvec[2] = CM[2] - z
-...             CMrsq = CMrvec[0] * CMrvec[0] + CMrvec[1] * CMrvec[1] + CMrvec[2] * CMrvec[2]
+...             CMrsq = CMrvec[0] * CMrvec[0] + CMrvec[1] * CMrvec[1] + CMrvec[2] * CMrvec[2] + 1**2
 ...             CMr = CMrsq**(0.5)
-...             if (self.sizesx / (CMr+0.01) < 0.5) or (self.children==[]):
-...                 F1x += (self.G * m * summass / (CMrsq + 0.2)) * (CMrvec[0]/CMr)
-...                 F1y += (self.G * m * summass / (CMrsq + 0.2)) * (CMrvec[1]/CMr)
-...                 F1z += (self.G * m * summass / (CMrsq + 0.2)) * (CMrvec[2]/CMr)
+...             if (self.sizesx / (CMr+0.00001) < 0.5) or (self.children==[]):
+...                 F1x += (self.G * m * summass / (CMrsq)) * (CMrvec[0]/CMr)
+...                 F1y += (self.G * m * summass / (CMrsq)) * (CMrvec[1]/CMr)
+...                 F1z += (self.G * m * summass / (CMrsq)) * (CMrvec[2]/CMr)
 ...             else:
 ...                 for jj in range(len(self.children)):
 ...                     self.children[jj].CalcF(particle, F1x, F1y, F1z)
@@ -240,9 +238,9 @@ The Cython extension is already loaded. To reload it, use:
 ...
 ...
 ...     def CalcTF(self):
-...         cdef double Fx[640]
-...         cdef double Fy[640]
-...         cdef double Fz[640]
+...         cdef double Fx[135]
+...         cdef double Fy[135]
+...         cdef double Fz[135]
 ...         cdef int j, jj
 ...         for jj in range(len(Fx)):
 ...             Fx[jj] = 0
@@ -262,24 +260,24 @@ The Cython extension is already loaded. To reload it, use:
 ...
 ...         for k in range(len(self.poslist)):
 ...             # Calculate velocity, 1st step
-...             self.vellist[k][0] += 0.5 * self.Fx[k] * self.dt
-...             self.vellist[k][1] += 0.5 * self.Fy[k] * self.dt
-...             self.vellist[k][2] += 0.5 * self.Fz[k] * self.dt
+...             self.vellist[k][0] += 0.5 * (self.Fx[k] / self.poslist[k][3]) * self.dt
+...             self.vellist[k][1] += 0.5 * (self.Fy[k] / self.poslist[k][3]) * self.dt
+...             self.vellist[k][2] += 0.5 * (self.Fz[k] / self.poslist[k][3]) * self.dt
 ...             # Calculate new positions
 ...             self.poslist[k][0] += self.vellist[k][0] * self.dt
 ...             self.poslist[k][1] += self.vellist[k][1] * self.dt
 ...             self.poslist[k][2] += self.vellist[k][2] * self.dt
-...             self.poslist[k][0] = self.poslist[k][0] % 200
-...             self.poslist[k][1] = self.poslist[k][1] % 200
-...             self.poslist[k][2] = self.poslist[k][2] % 200
+...             self.poslist[k][0] = self.poslist[k][0] % 250
+...             self.poslist[k][1] = self.poslist[k][1] % 250
+...             self.poslist[k][2] = self.poslist[k][2] % 250
 ...
 ...
 ...         self.Fx, self.Fy, self.Fz = self.CalcTF()
 ...         for k2 in range(len(self.poslist)):
 ...             # Calculate velocity, 2nd step
-...             self.vellist[k2][0] += 0.5 * self.Fx[k2] * self.dt
-...             self.vellist[k2][1] += 0.5 * self.Fy[k2] * self.dt
-...             self.vellist[k2][2] += 0.5 * self.Fz[k2] * self.dt
+...             self.vellist[k2][0] += 0.5 * (self.Fx[k2] / self.poslist[k2][3]) * self.dt
+...             self.vellist[k2][1] += 0.5 * (self.Fy[k2] / self.poslist[k2][3]) * self.dt
+...             self.vellist[k2][2] += 0.5 * (self.Fz[k2] / self.poslist[k2][3]) * self.dt
 ...         self.CreateTree
 ...         return self.poslist
 ...
@@ -295,54 +293,77 @@ The Cython extension is already loaded. To reload it, use:
 ... # Change the list sizes for F in init and CalcTF when changing N,
 ... # and recompile.
 ...
-... L = 200 # [AU]
+... L = 250 # [AU]
 >>> dt = 0.1 # [years]
->>> G = 1
+>>> #G = 1.003e-52 # G value for dataset
+... G = 1
+>>> r = np.zeros(5)
+>>> r[0] = 10
+>>> r[1] = 30
+>>> r[2] = 50
+>>> r[3] = 80
+>>> r[4] = 100
+>>> #r = np.linspace(10,10,1)
+... c = 0.5
+>>> Nr = np.floor(c*r)
+>>> theta = np.pi/2
+>>> phi1 = 2*np.pi*(1-1/Nr[0])
+>>> phi = np.linspace(0, phi1 , Nr[0])
+>>> poslist = np.zeros((len(phi), 4))
+>>> vellist = np.zeros((len(phi), 3))
+>>> for j in range(len(phi)):
+...     poslist[j, 0] = r[0] * np.sin(theta) * np.cos(phi[j])
+...     poslist[j, 1] = r[0] * np.sin(theta) * np.sin(phi[j])
+...     poslist[j, 2] = r[0] * np.cos(theta)
+...     poslist[j, 3] = 1
+>>> mass = np.sum(poslist[:,3])
+>>> vmag = np.sqrt(G*mass/r[0])
+>>> for k in range(len(phi)):
+...     vellist[k, 0] = -vmag * np.sin(phi[k])
+...     vellist[k, 1] = vmag * np.cos(phi[k])
+...     vellist[k, 2] = 0
 ...
->>> # r = np.linspace(10,10,1)
-... # c = 1
-... # Nr = np.floor(c*r)
-... # theta = np.pi/2
-... # phi1 = 2*np.pi*(1-1/Nr[0])
-... # phi = np.linspace(0, phi1 , Nr[0])
-... # poslist = np.zeros((len(phi), 4))
-... # vellist = np.zeros((len(phi), 3))
-... # for j in range(len(phi)):
-... #     poslist[j, 0] = r[0] * np.sin(theta) * np.cos(phi[j])
-... #     poslist[j, 1] = r[0] * np.sin(theta) * np.sin(phi[j])
-... #     poslist[j, 2] = r[0] * np.cos(theta)
-... #     poslist[j, 3] = 1
-... # mass = np.sum(poslist[:,3])
-... # vmag = np.sqrt(G*mass/r[0])
-... # for k in range(len(phi)):
-... #     vellist[k, 0] = -vmag * np.sin(phi[k])
-... #     vellist[k, 1] = vmag * np.cos(phi[k])
-... #     vellist[k, 2] = 0
+>>> for i in range(1,len(Nr)):
+...     phi2 = 2*np.pi*(1-1/Nr[i])
+...     phi = np.linspace(0, phi2, Nr[i])
+...     for jj in range(len(phi)):
+...         poslist2 = np.zeros(4)
+...         poslist2[0] = r[i] * np.sin(theta) * np.cos(phi[jj])
+...         poslist2[1] = r[i] * np.sin(theta) * np.sin(phi[jj])
+...         poslist2[2] = r[i] * np.cos(theta)
+...         poslist2[3] = 1
+...         poslist = np.vstack((poslist, poslist2))
+...     mass = np.sum(poslist[:,3])
+...     vmag = np.sqrt(G*mass/r[i])
+...     for kk in range(len(phi)):
+...         vellist2 = np.zeros(3)
+...         vellist2[0] = -vmag * np.sin(phi[kk])
+...         vellist2[1] = vmag * np.cos(phi[kk])
+...         vellist2[2] = 0
+...         vellist = np.vstack((vellist, vellist2))
+>>> poslist[:,0:3] = poslist[:,0:3] + L/2
+>>> totalmass = np.sum(poslist[:,3])
+>>> N = np.int(np.sum(Nr)) # Number of particles
+>>> print(N)
+>>> #sys.setrecursionlimit(2*N)
+... fig = plt.figure()
+>>> #ax = fig.add_subplot(111, projection='3d')
+... ax = fig.add_subplot(111)
+>>> #ax.scatter(poslist[:,0], poslist[:,1], poslist[:,2], c='r', marker='o')
+... ax.scatter(poslist[:,0], poslist[:,1], c='r', marker='o', s = poslist[:, 3])
 ...
-... # for i in range(1,len(Nr)):
-... #     phi2 = 2*np.pi*(1-1/Nr[i])
-... #     phi = np.linspace(0, phi2, Nr[i])
-... #     for jj in range(len(phi)):
-... #         poslist2 = np.zeros(4)
-... #         poslist2[0] = r[i] * np.sin(theta) * np.cos(phi[jj])
-... #         poslist2[1] = r[i] * np.sin(theta) * np.sin(phi[jj])
-... #         poslist2[2] = r[i] * np.cos(theta)
-... #         poslist2[3] = 1
-... #         poslist = np.vstack((poslist, poslist2))
-... #     mass = np.sum(poslist[:,3])
-... #     vmag = np.sqrt(G*mass/r[i])
-... #     for kk in range(len(phi)):
-... #         vellist2 = np.zeros(3)
-... #         vellist2[0] = -vmag * np.sin(phi[kk])
-... #         vellist2[1] = vmag * np.cos(phi[kk])
-... #         vellist2[2] = 0
-... #         vellist = np.vstack((vellist, vellist2))
-... # poslist[:,0:3] = poslist[:,0:3] + L/2
-... # totalmass = np.sum(poslist[:,3])
-... # N = np.int(np.sum(Nr)) # Number of particles
-... # print(N)
-... #sys.setrecursionlimit(2*N)
-... ## Three particles rotating
+>>> ax.set_xlabel('X Label')
+>>> ax.set_ylabel('Y Label')
+>>> #ax.set_zlabel('Z Label')
+... #ax.set_zlim(0, L)
+... ax.set_xlim(0, L)
+>>> ax.set_ylim(0, L)
+>>> plt.show()
+135
+```
+
+```python
+>>> ## Three particles rotating
 ... # r = np.sqrt(2**2 + 4**2)*0.5
 ... # theta = [0 , 2*np.pi/3, 4*np.pi/3]
 ... # totalmass = 3
@@ -389,15 +410,14 @@ The Cython extension is already loaded. To reload it, use:
 ... # vellist[4, 1] = v*np.cos(theta[4])
 ... # vellist[4, 2] = 0
 ... # vellist[2, :] = [np.sin(np.pi/3), np.cos(np.pi/3), 0]
-... N = 81920
->>> poslist = np.zeros((640, 4))
->>> vellist = np.zeros((640, 3))
+```
+
+```python
+>>> N = 81920
+>>> poslist = np.zeros((int(N/128), 4))
+>>> vellist = np.zeros((int(N/128), 3))
 >>> data = np.loadtxt('dubinski.txt')
->>> data2 = np.zeros((640,7))
->>> for i in range(len(data[:,0])):
-...     if i%128 == 0:
-...         j = int(i/128)
-...         data2[j,:] = data[i,:]
+>>> data2 = data[::128,:]
 >>> data2[:, 0] = data2[:, 0]*128
 >>> data = data2
 >>> poslist[:, 3] = data[:, 0]
@@ -407,16 +427,17 @@ The Cython extension is already loaded. To reload it, use:
 >>> vellist[:, 0] = data[:, 4]
 >>> vellist[:, 1] = data[:, 5]
 >>> vellist[:, 2] = data[:, 6]
-...
 >>> fig = plt.figure()
->>> ax = fig.add_subplot(111, projection='3d')
->>> ax.scatter(poslist[:,0], poslist[:,1], poslist[:,2], c='r', marker='o')
+>>> #ax = fig.add_subplot(111, projection='3d')
+... ax = fig.add_subplot(111)
+>>> #ax.scatter(poslist[:,0], poslist[:,1], poslist[:,2], c='r', marker='o')
+... ax.scatter(poslist[:,0], poslist[:,1], c='r', marker='o', s = poslist[:, 3])
 ...
 >>> ax.set_xlabel('X Label')
 >>> ax.set_ylabel('Y Label')
->>> ax.set_zlabel('Z Label')
->>> ax.set_zlim(0, L)
->>> ax.set_xlim(0, L)
+>>> #ax.set_zlabel('Z Label')
+... #ax.set_zlim(0, L)
+... ax.set_xlim(0, L)
 >>> ax.set_ylim(0, L)
 >>> plt.show()
 ```
@@ -459,46 +480,67 @@ The Cython extension is already loaded. To reload it, use:
 ```
 
 ```python
->>> nt = 10
+>>> aa = OctoTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, 2*N)
+>>> fig = plt.figure()
+>>> ax = fig.add_subplot(111, aspect='equal', autoscale_on=False, xlim=(0, L), ylim=(0, L))
+>>> particles, = ax.plot([], [], 'bo', ms=3)
+...
+>>> xx = np.zeros(N)
+>>> yy = np.zeros(N)
+...
+>>> def animate(i):
+...     pposlist = aa.MoveParticles()
+...     for iii in range(len(pposlist)):
+...         xx[iii] = pposlist[iii][0]
+...         yy[iii] = pposlist[iii][1]
+...     particles.set_data(xx, yy)
+...     return particles
+...
+>>> def save_anim(file, title):
+...     "saves the animation with a desired title"
+...     Writer = animation.writers['ffmpeg']
+...     writer = Writer(fps=25, metadata=dict(artist='Me'), bitrate=1800)
+...     file.save(title + '.mp4', writer=writer)
+...
+>>> ani = animation.FuncAnimation(fig, animate, frames=1000, repeat=False)
+...
+>>> plt.show()
+```
+
+```python
+>>> save_anim(ani, 'Animation')
+```
+
+```python
+>>> nt = 100
 >>> aa = OctoTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N)
 >>> aa.Simulate(nt)
 >>> xx = np.zeros(N)
 >>> yy = np.zeros(N)
 >>> zz = np.zeros(N)
+>>> mm = np.zeros(N)
 >>> for iii in range(len(aa.poslist)):
 ...     xx[iii] = aa.poslist[iii][0]
 ...     yy[iii] = aa.poslist[iii][1]
 ...     zz[iii] = aa.poslist[iii][2]
+...     mm[iii] = aa.poslist[iii][3]
 >>> fig = plt.figure()
->>> ax = fig.add_subplot(111, projection='3d')
->>> ax.scatter(xx, yy, zz, c='r', marker='o')
-...
+>>> #ax = fig.add_subplot(111, projection='3d')
+... ax = fig.add_subplot(111)
+>>> #ax.scatter(xx, yy, zz, c='r', marker='o', s=mm)
+... ax.scatter(xx, yy, c='r', marker='o', s=mm)
 >>> ax.set_xlabel('X Label')
 >>> ax.set_ylabel('Y Label')
->>> ax.set_zlabel('Z Label')
->>> ax.set_zlim(0, L)
->>> ax.set_xlim(0, L)
+>>> #ax.set_zlabel('Z Label')
+... #ax.set_zlim(0, L)
+... ax.set_xlim(0, L)
 >>> ax.set_ylim(0, L)
 >>> plt.show()
 ```
 
 ```python
->>> a = [[1, 2, 2], [3, 4, 2]]
->>> print(a)
->>> print(len(a))
->>> a[1][1]
-```
-
-```python
->>> len(poslist.tolist())
-```
-
-```python
->>> print m
-```
-
-```python
->>> print(m)
+>>> (6.674e-11/(3.0857e19)**3)*(1.0678e41/(1.5552e12)**2)
+1.0028651095792267e-52
 ```
 
 ```python

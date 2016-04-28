@@ -6,6 +6,8 @@
 >>> from matplotlib import animation
 >>> import mpl_toolkits.mplot3d.axes3d as p3
 >>> import sys
+The Cython extension is already loaded. To reload it, use:
+  %reload_ext Cython
 ```
 
 ```python
@@ -36,9 +38,9 @@
 ...         self.G = G
 ...
 ...         cdef double xmid, ymid, zmid
-...         cdef double Fx[4]
-...         cdef double Fy[4]
-...         cdef double Fz[4]
+...         cdef double Fx[640]
+...         cdef double Fy[640]
+...         cdef double Fz[640]
 ...         cdef double sizesx, sizesy, sizesz
 ...
 ...         self.sizesx = self.xmax - self.xmin
@@ -227,7 +229,7 @@
 ...             CMrvec[2] = CM[2] - z
 ...             CMrsq = CMrvec[0] * CMrvec[0] + CMrvec[1] * CMrvec[1] + CMrvec[2] * CMrvec[2]
 ...             CMr = CMrsq**(0.5)
-...             if (self.sizesx / CMr < 0.5) or (self.children==[]):
+...             if (self.sizesx / (CMr+0.01) < 0.5) or (self.children==[]):
 ...                 F1x += (self.G * m * summass / (CMrsq + 0.2)) * (CMrvec[0]/CMr)
 ...                 F1y += (self.G * m * summass / (CMrsq + 0.2)) * (CMrvec[1]/CMr)
 ...                 F1z += (self.G * m * summass / (CMrsq + 0.2)) * (CMrvec[2]/CMr)
@@ -238,9 +240,9 @@
 ...
 ...
 ...     def CalcTF(self):
-...         cdef double Fx[4]
-...         cdef double Fy[4]
-...         cdef double Fz[4]
+...         cdef double Fx[640]
+...         cdef double Fy[640]
+...         cdef double Fz[640]
 ...         cdef int j, jj
 ...         for jj in range(len(Fx)):
 ...             Fx[jj] = 0
@@ -267,9 +269,9 @@
 ...             self.poslist[k][0] += self.vellist[k][0] * self.dt
 ...             self.poslist[k][1] += self.vellist[k][1] * self.dt
 ...             self.poslist[k][2] += self.vellist[k][2] * self.dt
-...             self.poslist[k][0] = self.poslist[k][0] % 20
-...             self.poslist[k][1] = self.poslist[k][1] % 20
-...             self.poslist[k][2] = self.poslist[k][2] % 20
+...             self.poslist[k][0] = self.poslist[k][0] % 200
+...             self.poslist[k][1] = self.poslist[k][1] % 200
+...             self.poslist[k][2] = self.poslist[k][2] % 200
 ...
 ...
 ...         self.Fx, self.Fy, self.Fz = self.CalcTF()
@@ -293,68 +295,64 @@
 ... # Change the list sizes for F in init and CalcTF when changing N,
 ... # and recompile.
 ...
-... L = 20 # [AU]
+... L = 200 # [AU]
 >>> dt = 0.1 # [years]
 >>> G = 1
 ...
->>> r = np.linspace(5,5,1)
->>> c = 1
->>> Nr = [np.floor(c*r)]
->>> theta = np.pi/2
->>> phi1 = 2*np.pi*(1-1/Nr[0])
->>> phi = np.linspace(0, phi1 , Nr[0])
->>> print(phi)
->>> print(0, 2*np.pi/3, 4*np.pi/3)
->>> poslist = np.zeros((len(phi), 4))
->>> vellist = np.zeros((len(phi), 3))
->>> for j in range(len(phi)):
-...     poslist[j, 0] = r[0] * np.sin(theta) * np.cos(phi[j])
-...     poslist[j, 1] = r[0] * np.sin(theta) * np.sin(phi[j])
-...     poslist[j, 2] = r[0] * np.cos(theta)
-...     poslist[j, 3] = 1
->>> mass = np.sum(poslist[:,3])
->>> print(mass)
->>> vmag = np.sqrt(G*mass/r[0])
->>> for k in range(len(phi)):
-...     vellist[k, 0] = -vmag * np.sin(phi[k])
-...     vellist[k, 1] = vmag * np.cos(phi[k])
-...     vellist[k, 2] = 0
+>>> # r = np.linspace(10,10,1)
+... # c = 1
+... # Nr = np.floor(c*r)
+... # theta = np.pi/2
+... # phi1 = 2*np.pi*(1-1/Nr[0])
+... # phi = np.linspace(0, phi1 , Nr[0])
+... # poslist = np.zeros((len(phi), 4))
+... # vellist = np.zeros((len(phi), 3))
+... # for j in range(len(phi)):
+... #     poslist[j, 0] = r[0] * np.sin(theta) * np.cos(phi[j])
+... #     poslist[j, 1] = r[0] * np.sin(theta) * np.sin(phi[j])
+... #     poslist[j, 2] = r[0] * np.cos(theta)
+... #     poslist[j, 3] = 1
+... # mass = np.sum(poslist[:,3])
+... # vmag = np.sqrt(G*mass/r[0])
+... # for k in range(len(phi)):
+... #     vellist[k, 0] = -vmag * np.sin(phi[k])
+... #     vellist[k, 1] = vmag * np.cos(phi[k])
+... #     vellist[k, 2] = 0
 ...
->>> for i in range(1,len(Nr)):
-...     phi1 = 2*np.pi*(1-1/Nr[i])
-...     phi = np.linspace(0, phi1, Nr[i])
-...     phi = np.delete(phi, -1)
-...     for jj in range(len(phi)):
-...         poslist2 = np.zeros(4)
-...         poslist2[0] = r[i] * np.sin(theta) * np.cos(phi[jj])
-...         poslist2[1] = r[i] * np.sin(theta) * np.sin(phi[jj])
-...         poslist2[2] = r[i] * np.cos(theta)
-...         poslist2[3] = 1
-...         poslist = np.vstack((poslist, poslist2))
-...     mass = np.sum(poslist[:,3])
-...     vmag = np.sqrt(G*mass/r[0])
-...     for kk in range(len(phi)):
-...         vellist2 = np.zeros(3)
-...         vellist2[0] = -vmag * np.sin(phi[kk])
-...         vellist2[1] = vmag * np.cos(phi[kk])
-...         vellist2[2] = 0
-...         vellist = np.vstack((vellist, vellist2))
-...
->>> poslist[:,0:4] = poslist[:,0:4] + L/2
->>> totalmass = np.sum(poslist[:,3])
->>> N = np.int(np.sum(Nr)) # Number of particles
->>> print(N)
->>> #sys.setrecursionlimit(2*N)
+... # for i in range(1,len(Nr)):
+... #     phi2 = 2*np.pi*(1-1/Nr[i])
+... #     phi = np.linspace(0, phi2, Nr[i])
+... #     for jj in range(len(phi)):
+... #         poslist2 = np.zeros(4)
+... #         poslist2[0] = r[i] * np.sin(theta) * np.cos(phi[jj])
+... #         poslist2[1] = r[i] * np.sin(theta) * np.sin(phi[jj])
+... #         poslist2[2] = r[i] * np.cos(theta)
+... #         poslist2[3] = 1
+... #         poslist = np.vstack((poslist, poslist2))
+... #     mass = np.sum(poslist[:,3])
+... #     vmag = np.sqrt(G*mass/r[i])
+... #     for kk in range(len(phi)):
+... #         vellist2 = np.zeros(3)
+... #         vellist2[0] = -vmag * np.sin(phi[kk])
+... #         vellist2[1] = vmag * np.cos(phi[kk])
+... #         vellist2[2] = 0
+... #         vellist = np.vstack((vellist, vellist2))
+... # poslist[:,0:3] = poslist[:,0:3] + L/2
+... # totalmass = np.sum(poslist[:,3])
+... # N = np.int(np.sum(Nr)) # Number of particles
+... # print(N)
+... #sys.setrecursionlimit(2*N)
 ... ## Three particles rotating
 ... # r = np.sqrt(2**2 + 4**2)*0.5
 ... # theta = [0 , 2*np.pi/3, 4*np.pi/3]
 ... # totalmass = 3
-... # poslist = np.zeros((4,4))
-... # vellist = np.zeros((4,3))
-... # totalmass = 4
-... # theta = [0, np.pi/2, np.pi, 3*np.pi/2]
-... # r = np.sqrt(2**2 + 2**2)
+... # poslist = np.zeros((5,4))
+... # vellist = np.zeros((5,3))
+... # totalmass = 5
+... # theta = [0, 1*(2*np.pi/5), 2*(2*np.pi/5), 3*(2*np.pi/5), 4*(2*np.pi/5)]
+... # r = 5
 ... # v = np.sqrt(G*totalmass/r)
+... # print(v)
 ... # poslist[0, 0] = r + L/2
 ... # poslist[0, 1] = L/2
 ... # poslist[0, 2] = L/2
@@ -371,6 +369,10 @@
 ... # poslist[3, 1] = r*np.sin(theta[3]) + L/2
 ... # poslist[3, 2] = L/2
 ... # poslist[3, 3] = 1
+... # poslist[4, 0] = r*np.cos(theta[4]) + L/2
+... # poslist[4, 1] = r*np.sin(theta[4]) + L/2
+... # poslist[4, 2] = L/2
+... # poslist[4, 3] = 1
 ... # vellist[0, 0] = 0
 ... # vellist[0, 1] = v
 ... # vellist[0, 2] = 0
@@ -383,9 +385,30 @@
 ... # vellist[3, 0] = v*-np.sin(theta[3])
 ... # vellist[3, 1] = v*np.cos(theta[3])
 ... # vellist[3, 2] = 0
+... # vellist[4, 0] = v*-np.sin(theta[4])
+... # vellist[4, 1] = v*np.cos(theta[4])
+... # vellist[4, 2] = 0
 ... # vellist[2, :] = [np.sin(np.pi/3), np.cos(np.pi/3), 0]
+... N = 81920
+>>> poslist = np.zeros((640, 4))
+>>> vellist = np.zeros((640, 3))
+>>> data = np.loadtxt('dubinski.txt')
+>>> data2 = np.zeros((640,7))
+>>> for i in range(len(data[:,0])):
+...     if i%128 == 0:
+...         j = int(i/128)
+...         data2[j,:] = data[i,:]
+>>> data2[:, 0] = data2[:, 0]*128
+>>> data = data2
+>>> poslist[:, 3] = data[:, 0]
+>>> poslist[:, 0] = data[:, 1] + L/2
+>>> poslist[:, 1] = data[:, 2] + L/2
+>>> poslist[:, 2] = data[:, 3] + L/2
+>>> vellist[:, 0] = data[:, 4]
+>>> vellist[:, 1] = data[:, 5]
+>>> vellist[:, 2] = data[:, 6]
 ...
-... fig = plt.figure()
+>>> fig = plt.figure()
 >>> ax = fig.add_subplot(111, projection='3d')
 >>> ax.scatter(poslist[:,0], poslist[:,1], poslist[:,2], c='r', marker='o')
 ...
@@ -396,15 +419,6 @@
 >>> ax.set_xlim(0, L)
 >>> ax.set_ylim(0, L)
 >>> plt.show()
->>> print(poslist)
-[ 0.          1.57079633  3.14159265  4.71238898]
-0 2.0943951023931953 4.1887902047863905
-4.0
-4
-[[ 12.82842712  10.          10.           1.        ]
- [ 10.          12.82842712  10.           1.        ]
- [  7.17157288  10.          10.           1.        ]
- [ 10.           7.17157288  10.           1.        ]]
 ```
 
 ```python
@@ -442,79 +456,6 @@
 >>> ani = animation.FuncAnimation(fig, animate, frames=1000, repeat=False)
 >>> #save_anim(ani, 'Test')
 ... plt.show()
-10.118920711500271
-10.237636339587048
-10.355942234026292
-10.473634609413924
-10.59051097377904
-10.706370552642479
-10.821014707064736
-10.934247344258214
-11.045875319389413
-11.155708827255884
-11.263561782590259
-11.36925218781851
-11.472602487180998
-11.573439906211997
-11.671596775665295
-11.76691083906918
-11.859225543192778
-11.94839031080618
-12.034260795218337
-12.116699116178175
-12.195574076825075
-12.270761361473816
-12.342143714115569
-12.409611097609757
-12.473060833631067
-12.532397723520758
-12.587534150271466
-12.638390161949317
-12.684893536926012
-12.726979831356504
-12.7645924093946
-12.797682456689259
-12.826208977748479
-12.850138777795477
-12.86944642977344
-12.88411422718062
-12.894132123437174
-12.899497658499042
-12.900215873442743
-12.896299213748385
-12.887767422006856
-12.874647420771407
-12.856973186263982
-12.834785613633118
-12.808132374443305
-12.777067767055827
-12.741652560538613
-12.701953832717832
-12.658044802957297
-12.610004660223435
-12.55791838696403
-12.501876579298388
-12.44197526398531
-12.378315712603566
-12.311004253347686
-12.240152080809946
-12.165875064087826
-12.088293553524945
-12.007532186362772
-11.923719691550492
-11.83698869393128
-11.747475517995074
-11.655319991360892
-11.560665248125822
-11.463657532193086
-11.364446000668224
-11.263182527390386
-11.160021506645048
-11.055119657085262
-10.948635825870767
-10.840730793018011
-10.73156707593935
-10.621308734136417
 ```
 
 ```python

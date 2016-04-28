@@ -6,6 +6,8 @@
 >>> from matplotlib import animation
 >>> import mpl_toolkits.mplot3d.axes3d as p3
 >>> import sys
+The Cython extension is already loaded. To reload it, use:
+  %reload_ext Cython
 ```
 
 ```python
@@ -15,8 +17,9 @@
 ... # DTYPE = np.float_
 ... # ctypedef np.float_t DTYPE_t
 ...
-... class OctoTree:
-...
+... cdef class OctoTree:
+...     cdef public poslist, vellist, depth, xmin, xmax, ymin, ymax, zmin, zmax, L, dt, G
+...     cdef public sizesx, sizesy, sizesz, children, xmid, ymid, zmid, F
 ...     def __init__(self, list poslist, list vellist, \
 ...                  double xmin, double ymin, double zmin, double xmax, double ymax, double zmax, \
 ...                  double L, double dt, double G, int depth):
@@ -332,9 +335,14 @@
 ```
 
 ```python
->>> nt = 100
->>> a = OctoTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N)
->>> a.Simulate(nt)
+>>> %%timeit
+... nt = 100
+... a = OctoTree(poslist.tolist(), vellist.tolist(), 0, 0, 0, L, L, L, L, dt, G, N)
+... a.Simulate(nt)
+1 loop, best of 3: 1.87 s per loop
+```
+
+```python
 >>> xx = np.zeros(N)
 >>> yy = np.zeros(N)
 >>> zz = np.zeros(N)
@@ -393,14 +401,10 @@
 >>> print(a)
 >>> print(len(a))
 >>> a[1][1]
-[[1, 2, 2], [3, 4, 2]]
-2
-4
 ```
 
 ```python
 >>> len(poslist.tolist())
-256
 ```
 
 ```python
